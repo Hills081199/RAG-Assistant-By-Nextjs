@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PhotoAlbum from "./PhotoAlbum";
+import BirthdayMessageWrapper from "./BirthdayMessageWrapper";
+import SecretGift from "./BirthdayWrapper";
 const targetDate = new Date("2025-06-08T00:00:00");
 
 function getTimeRemaining(target: Date) {
@@ -121,7 +123,9 @@ export default function BirthdayCountdown() {
       }}>
         <PhotoAlbum />
       </div>
-
+              
+      <BirthdayMessageWrapper />
+      <SecretGift />
       <style jsx>{`
         @keyframes pulse {
           0% { transform: scale(1); }
