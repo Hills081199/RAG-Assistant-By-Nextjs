@@ -1,4 +1,16 @@
 import { useState, useEffect, useMemo } from 'react';
+
+interface VocabularyResponse {
+  vocabulary: Array<{
+    word: string;
+    pinyin: string;
+    definition: string;
+    partOfSpeech: string;
+    example: string;
+    level?: string;
+    text?: string;
+  }>;
+}
 interface VocabularyItem {
   word: string;
   pinyin: string;
@@ -76,58 +88,6 @@ const VocabularyComponent: React.FC<{ level: number, text: string }> = ({ level,
       try {
         setIsLoading(true);
         setError(null);
-        console.log('Fetching vocabulary data...');
-        console.log(level, text)
-        
-        // Mock data for demonstration since API endpoint is not available
-        const mockData: VocabularyItem[] = [
-          {
-            word: "你好",
-            pinyin: "nǐ hǎo",
-            definition: "Hello, a common greeting",
-            partOfSpeech: "感叹词",
-            example: "你好，很高兴见到你。(Hello, nice to meet you.)",
-            level: "HSK1"
-          },
-          {
-            word: "学习",
-            pinyin: "xué xí",
-            definition: "To learn, to study",
-            partOfSpeech: "动词",
-            example: "我在学习中文。(I am learning Chinese.)",
-            level: "HSK2"
-          },
-          {
-            word: "漂亮",
-            pinyin: "piào liang",
-            definition: "Beautiful, pretty",
-            partOfSpeech: "形容词",
-            example: "这朵花很漂亮。(This flower is very beautiful.)",
-            level: "HSK2"
-          },
-          {
-            word: "快乐",
-            pinyin: "kuài lè",
-            definition: "Happy, joyful",
-            partOfSpeech: "形容词",
-            example: "祝你生日快乐！(Happy birthday to you!)",
-            level: "HSK3"
-          },
-          {
-            word: "非常",
-            pinyin: "fēi cháng",
-            definition: "Very, extremely",
-            partOfSpeech: "副词",
-            example: "今天天气非常好。(The weather is very good today.)",
-            level: "HSK2"
-          }
-        ];
-
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setVocabularyData(mockData);
-
-        /* Uncomment this for actual API call
         const response = await fetch('/api/vocabulary', {
           method: 'POST',
           headers: {
@@ -150,7 +110,6 @@ const VocabularyComponent: React.FC<{ level: number, text: string }> = ({ level,
           console.error('Invalid response format: data.vocabulary is not an array', data);
           setError('Invalid response format from server. Please check console for details.');
         }
-        */
       } catch (err) {
         console.error('Error fetching vocabulary data:', err);
         setError('Error fetching vocabulary data. Please try again later.');
