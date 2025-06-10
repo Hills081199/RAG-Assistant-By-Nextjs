@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import ListeningComponent from '@/components/Listening';
 import ReadingComponent from '@/components/Reading';
-import LoginPage from '@/components/Login';
 
 const Home: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'listening' | 'reading'>('listening');

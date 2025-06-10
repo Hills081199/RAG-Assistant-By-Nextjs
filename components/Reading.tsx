@@ -44,13 +44,13 @@ const ReadingComponent: React.FC = () => {
           maxWords: 300,
         }),
       });
-    
+
       if (!response.ok) {
         throw new Error('Failed to fetch reading exercise');
       }
-    
+
       const data = await response.json();
-    
+
       setData(data);
       setAnswers(new Array(data.questions.length).fill(''));
     } catch (err) {
@@ -84,9 +84,9 @@ const ReadingComponent: React.FC = () => {
 
   return (
     <div>
-    <>
-      <style>
-        {`
+      <>
+        <style>
+          {`
           @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -416,134 +416,134 @@ const ReadingComponent: React.FC = () => {
             border: 2px solid #81c784;
           }
         `}
-      </style>
-      <main className="reading-main">
-        <h1 className="reading-title">
-          <span>📖</span> Chinese Reading Mini Practices
-        </h1>
+        </style>
+        <main className="reading-main">
+          <h1 className="reading-title">
+            <span>📖</span> Chinese Reading Mini Practices
+          </h1>
 
-        <div className="reading-instructions">
-          <h3>📚 Hướng dẫn học</h3>
-          <p>
-            Chọn trình độ HSK, nhấn "Tạo bài" để nhận đoạn văn đọc hiểu. Đọc kỹ đoạn văn, trả lời các câu hỏi, rồi kiểm tra kết quả!{' '}
-            <span>Đọc hiểu giỏi, tiến bộ vượt bậc!</span>
-          </p>
-        </div>
+          <div className="reading-instructions">
+            <h3>📚 Hướng dẫn học</h3>
+            <p>
+              Chọn trình độ HSK, nhấn "Tạo bài" để nhận đoạn văn đọc hiểu. Đọc kỹ đoạn văn, trả lời các câu hỏi, rồi kiểm tra kết quả!{' '}
+              <span>Đọc hiểu giỏi, tiến bộ vượt bậc!</span>
+            </p>
+          </div>
 
-        <div className="reading-level-selector">
-          <label htmlFor="reading-level-select">Trình độ:</label>
-          <select
-            id="reading-level-select"
-            value={level}
-            onChange={(e) => setLevel(parseInt(e.target.value))}
+          <div className="reading-level-selector">
+            <label htmlFor="reading-level-select">Trình độ:</label>
+            <select
+              id="reading-level-select"
+              value={level}
+              onChange={(e) => setLevel(parseInt(e.target.value))}
+              disabled={loading}
+            >
+              <option value={1}>HSK 1 (Sơ cấp)</option>
+              <option value={2}>HSK 2 (Sơ trung)</option>
+              <option value={3}>HSK 3 (Trung cấp)</option>
+            </select>
+          </div>
+
+          <button
+            className="reading-btn generate-btn"
+            onClick={handleGenerate}
             disabled={loading}
           >
-            <option value={1}>HSK 1 (Sơ cấp)</option>
-            <option value={2}>HSK 2 (Sơ trung)</option>
-            <option value={3}>HSK 3 (Trung cấp)</option>
-          </select>
-        </div>
+            {loading ? 'Đang tạo bài...' : 'Tạo bài đọc hiểu'}
+          </button>
 
-        <button
-          className="reading-btn generate-btn"
-          onClick={handleGenerate}
-          disabled={loading}
-        >
-          {loading ? 'Đang tạo bài...' : 'Tạo bài đọc hiểu'}
-        </button>
-
-        {data && (
-          <>
-            <div className="reading-passage">
-              <h3>
-                <span>📄</span> Đoạn văn đọc hiểu
-              </h3>
-              <p>{data.readingText}</p>
-            </div>
-
-            <div className="questions-section">
-              <h4>
-                <span>❓</span> Câu hỏi
-              </h4>
-              
-              {data.questions.map((question, qIndex) => {
-                const optionKeys = ['A', 'B', 'C', 'D'] as const;
-                
-                return (
-                  <div key={qIndex} className="question-item">
-                    <div className="question-text">
-                      {qIndex + 1}. {question.question}
-                      <span className="question-type">({question.type})</span>
-                    </div>
-                    <div className="options-container">
-                      {optionKeys.map((optionKey) => {
-                        let optionClass = "option-item";
-                        
-                        if (showAnswers) {
-                          if (optionKey === question.answer) {
-                            optionClass += " correct-answer";
-                          } else if (answers[qIndex] === optionKey && optionKey !== question.answer) {
-                            optionClass += " incorrect";
-                          }
-                        } else if (answers[qIndex] === optionKey) {
-                          optionClass += " selected";
-                        }
-
-                        return (
-                          <div
-                            key={optionKey}
-                            className={optionClass}
-                            onClick={() => !showAnswers && handleChangeAnswer(qIndex, optionKey)}
-                          >
-                            <div className={`option-radio ${answers[qIndex] === optionKey ? 'selected' : ''}`} />
-                            <div className="option-text">
-                              {optionKey}. {question.options[optionKey]}
-                            </div>
-                            {showAnswers && optionKey === question.answer && <span>✓</span>}
-                            {showAnswers && answers[qIndex] === optionKey && optionKey !== question.answer && <span>✗</span>}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-
-              <div className={`status-indicator ${allQuestionsAnswered ? 'complete' : 'incomplete'}`}>
-                {allQuestionsAnswered ? 
-                  '✅ Đã trả lời tất cả câu hỏi! Bạn có thể submit đáp án.' : 
-                  `⚠️ Còn ${answers.filter(a => a === '').length} câu chưa trả lời!`
-                }
+          {data && (
+            <>
+              <div className="reading-passage">
+                <h3>
+                  <span>📄</span> Đoạn văn đọc hiểu
+                </h3>
+                <p>{data.readingText}</p>
               </div>
 
-              <button 
-                className="reading-btn submit-btn" 
-                onClick={handleSubmit}
-                disabled={!allQuestionsAnswered || showAnswers}
-              >
-                <span>✅</span> 
-                {!allQuestionsAnswered ? 'Vui lòng trả lời tất cả câu hỏi!' : 'Submit đáp án'}
-              </button>
+              <div className="questions-section">
+                <h4>
+                  <span>❓</span> Câu hỏi
+                </h4>
 
-              {showAnswers && (
-                <div className="results-section">
-                  <h4>
-                    <span>📊</span> Kết quả
-                  </h4>
-                  <div className="score-display">
-                    Điểm của bạn: {score} / {data.questions.length}
-                    {score === data.questions.length && (
-                      <span className="perfect">🎉 Xuất sắc!</span>
-                    )}
-                  </div>
+                {data.questions.map((question, qIndex) => {
+                  const optionKeys = ['A', 'B', 'C', 'D'] as const;
+
+                  return (
+                    <div key={qIndex} className="question-item">
+                      <div className="question-text">
+                        {qIndex + 1}. {question.question}
+                        <span className="question-type">({question.type})</span>
+                      </div>
+                      <div className="options-container">
+                        {optionKeys.map((optionKey) => {
+                          let optionClass = "option-item";
+
+                          if (showAnswers) {
+                            if (optionKey === question.answer) {
+                              optionClass += " correct-answer";
+                            } else if (answers[qIndex] === optionKey && optionKey !== question.answer) {
+                              optionClass += " incorrect";
+                            }
+                          } else if (answers[qIndex] === optionKey) {
+                            optionClass += " selected";
+                          }
+
+                          return (
+                            <div
+                              key={optionKey}
+                              className={optionClass}
+                              onClick={() => !showAnswers && handleChangeAnswer(qIndex, optionKey)}
+                            >
+                              <div className={`option-radio ${answers[qIndex] === optionKey ? 'selected' : ''}`} />
+                              <div className="option-text">
+                                {optionKey}. {question.options[optionKey]}
+                              </div>
+                              {showAnswers && optionKey === question.answer && <span>✓</span>}
+                              {showAnswers && answers[qIndex] === optionKey && optionKey !== question.answer && <span>✗</span>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                <div className={`status-indicator ${allQuestionsAnswered ? 'complete' : 'incomplete'}`}>
+                  {allQuestionsAnswered ?
+                    '✅ Đã trả lời tất cả câu hỏi! Bạn có thể submit đáp án.' :
+                    `⚠️ Còn ${answers.filter(a => a === '').length} câu chưa trả lời!`
+                  }
                 </div>
-              )}
-            </div>
-          </>
-        )}
-      </main>
-    </>
-    {data && <VocabularyComponent level={level} text={data.readingText} />}
+
+                <button
+                  className="reading-btn submit-btn"
+                  onClick={handleSubmit}
+                  disabled={!allQuestionsAnswered || showAnswers}
+                >
+                  <span>✅</span>
+                  {!allQuestionsAnswered ? 'Vui lòng trả lời tất cả câu hỏi!' : 'Submit đáp án'}
+                </button>
+
+                {showAnswers && (
+                  <div className="results-section">
+                    <h4>
+                      <span>📊</span> Kết quả
+                    </h4>
+                    <div className="score-display">
+                      Điểm của bạn: {score} / {data.questions.length}
+                      {score === data.questions.length && (
+                        <span className="perfect">🎉 Xuất sắc!</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </main>
+      </>
+      {data && <VocabularyComponent level={level} text={data.readingText} />}
     </div>
   );
 };

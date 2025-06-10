@@ -1,9 +1,4 @@
 import { useState, useEffect, useMemo } from 'react';
-
-interface VocabularyResponse {
-  vocabulary: VocabularyItem[];
-}
-
 interface VocabularyItem {
   word: string;
   pinyin: string;

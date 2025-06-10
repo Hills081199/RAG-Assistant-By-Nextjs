@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { speak } from '@/utils/tts';
 import axios from 'axios';
-import ReadingComponent from '@/components/Reading';
 import VocabularyComponent from './Vocabulary';
 
 type ListeningResponse = {
