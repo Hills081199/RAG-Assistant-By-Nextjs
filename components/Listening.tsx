@@ -427,7 +427,7 @@ const Listening: React.FC = () => {
         <div className="instructions">
           <h3>📚 Hướng dẫn học</h3>
           <p>
-            Chọn trình độ HSK, nhấn "Tạo bài" để nhận đoạn văn. Nghe kỹ, điền từ còn thiếu, rồi kiểm tra kết quả!{' '}
+            Chọn trình độ HSK, nhấn &quot;Tạo bài&quot; để nhận đoạn văn. Nghe kỹ, điền từ còn thiếu, rồi kiểm tra kết quả!{' '}
             <span>Học mà vui, tiến bộ mỗi ngày!</span>
           </p>
         </div>

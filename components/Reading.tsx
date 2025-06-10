@@ -425,7 +425,7 @@ const ReadingComponent: React.FC = () => {
           <div className="reading-instructions">
             <h3>📚 Hướng dẫn học</h3>
             <p>
-              Chọn trình độ HSK, nhấn "Tạo bài" để nhận đoạn văn đọc hiểu. Đọc kỹ đoạn văn, trả lời các câu hỏi, rồi kiểm tra kết quả!{' '}
+              Chọn trình độ HSK, nhấn &quot;Tạo bài&quot; để nhận đoạn văn đọc hiểu. Đọc kỹ đoạn văn, trả lời các câu hỏi, rồi kiểm tra kết quả!{' '}
               <span>Đọc hiểu giỏi, tiến bộ vượt bậc!</span>
             </p>
           </div>
