@@ -240,11 +240,48 @@ export default function Home() {
   // THÊM PHƯƠNG THỨC SAVE CONVERSATION
   const saveConversation = (messages: ConversationMessage[]) => {
     try {
-      const trimmedMessages = messages.slice(-MAX_HISTORY_ITEMS); // Giới hạn số tin nhắn
+      const trimmedMessages = messages.slice(-MAX_HISTORY_ITEMS);
+      
+      // Thử lưu vào localStorage
+      try {
+        localStorage.setItem('conversationMessages', JSON.stringify(trimmedMessages));
+      } catch (error) {
+        // Nếu vượt quá dung lượng, xóa bớt tin nhắn cũ
+        if (error instanceof DOMException && 
+            (error.name === 'QuotaExceededError' || 
+             error.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+             error.toString().includes('QuotaExceededError'))) {
+          
+          console.warn('LocalStorage full, removing older messages...');
+          
+          // Giảm số lượng tin nhắn còn 1 nửa và thử lại
+          const halfMessages = trimmedMessages.slice(Math.floor(trimmedMessages.length / 2));
+          
+          if (halfMessages.length > 0) {
+            // Thử lưu lại với số lượng tin nhắn ít hơn
+            localStorage.setItem('conversationMessages', JSON.stringify(halfMessages));
+            setConversationMessages(halfMessages);
+            return;
+          }
+          
+          // Nếu vẫn lỗi, xóa hết
+          console.warn('Clearing all messages due to storage limit');
+          localStorage.removeItem('conversationMessages');
+          setConversationMessages([]);
+          return;
+        }
+        
+        // Nếu lỗi khác, ném ra ngoài để xử lý ở catch bên ngoài
+        throw error;
+      }
+      
+      // Cập nhật state nếu lưu thành công
       setConversationMessages(trimmedMessages);
-      localStorage.setItem('conversationMessages', JSON.stringify(trimmedMessages));
+      
     } catch (err) {
       console.error('Error saving conversation:', err);
+      // Thông báo cho người dùng nếu cần
+      // alert('Không thể lưu cuộc hội thoại do giới hạn bộ nhớ. Vui lòng xóa bớt tin nhắn cũ.');
     }
   };
 
