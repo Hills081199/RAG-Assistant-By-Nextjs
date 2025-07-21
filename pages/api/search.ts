@@ -2,8 +2,8 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { QdrantClient } from '@qdrant/js-client-rest';
 
 const qdrantClient = new QdrantClient({
-  url: process.env.NEXT_PUBLIC_QDRANT_URL,
-  apiKey: process.env.NEXT_PUBLIC_QDRANT_API_KEY,
+  url: "https://98c798e6-7675-4794-abca-2b695e6e00a3.us-west-2-0.aws.cloud.qdrant.io",
+  apiKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIn0.Lh8pBeYzqpT1J7ZxK0JkKDwIeIXySMqZ0cyEpX53U68",
 });
 console.log("CLIENT : ", qdrantClient)
 
