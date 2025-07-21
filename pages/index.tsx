@@ -358,10 +358,10 @@ export default function Home() {
       ];
 
       const chatCompletion = await openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
+        model: 'gpt-4-turbo',
         messages: openaiMessages,
         max_tokens: 2500,
-        temperature: 0.7,
+        temperature: 0.4,
       });
 
       const response = chatCompletion.choices[0].message.content;
