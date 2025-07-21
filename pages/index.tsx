@@ -261,7 +261,7 @@ export default function Home() {
           { role: 'user', content: prompt },
         ],
         max_tokens: 2500,
-        temperature: 0.6,
+        temperature: 0.7,
       });
 
       const response = chatCompletion.choices[0].message.content;
