@@ -93,7 +93,7 @@ export default function Home() {
       const res = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ embedding, limit: 5 })
+        body: JSON.stringify({ embedding, limit: 15 })
       });
       
       if (!res.ok) {
@@ -105,20 +105,22 @@ export default function Home() {
       const data = await res.json();
       console.log('Search results:', data);
       
-      // Filter results by score threshold (0.3)
-      const filteredResults = data.filter((item: { score?: number }) => (item.score ?? 0) >= 0.3);
+      // // Filter results by score threshold (0.3)
+      // const filteredResults = data.filter((item: { score?: number }) => (item.score ?? 0) >= 0.3);
       
-      if (filteredResults.length === 0) {
-        setAnswer('Không tìm thấy thông tin liên quan trong cơ sở dữ liệu. Vui lòng thử lại với từ khóa khác hoặc mô tả chi tiết hơn.');
-        setLoading(false);
-        return;
-      }
+      // if (filteredResults.length === 0) {
+      //   setAnswer('Không tìm thấy thông tin liên quan trong cơ sở dữ liệu. Vui lòng thử lại với từ khóa khác hoặc mô tả chi tiết hơn.');
+      //   setLoading(false);
+      //   return;
+      // }
       
-      // 3. Create context from filtered search results
-      const contexts = filteredResults
-        .map((item: { payload: { text: string } }) => item.payload?.text)
-        .filter((text: string): text is string => Boolean(text))
-        .join('\n\n');
+      // // 3. Create context from filtered search results
+      // const contexts = filteredResults
+      // Nếu không filter score, chỉ lấy top N kết quả
+      const topResults = data.slice(0, 5);
+
+      // Tiếp tục xử lý với topResults, ví dụ:
+      const contexts = topResults.map((item: any) => item.payload.text).join('\n---\n');
 
       if (!contexts) {
         setAnswer('Không tìm thấy thông tin liên quan đến câu hỏi của bạn.');
