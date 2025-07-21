@@ -358,7 +358,7 @@ export default function Home() {
       ];
 
       const chatCompletion = await openai.chat.completions.create({
-        model: 'gpt-4-turbo',
+        model: 'gpt-4o',
         messages: openaiMessages,
         max_tokens: 2500,
         temperature: 0.4,
