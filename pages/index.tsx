@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import OpenAI from 'openai';
 import { QdrantClient } from '@qdrant/js-client-rest';
-
+interface SearchResultItem {
+  payload: {
+    text: string;
+  };
+  score?: number;
+}
 // Config should be stored in an .env file and accessed via process.env
 const QDRANT_URL = "https://98c798e6-7675-4794-abca-2b695e6e00a3.us-west-2-0.aws.cloud.qdrant.io"
 const QDRANT_COLLECTION = "huonglan86"
@@ -117,10 +122,10 @@ export default function Home() {
       // // 3. Create context from filtered search results
       // const contexts = filteredResults
       // Nếu không filter score, chỉ lấy top N kết quả
-      const topResults = data.slice(0, 5);
+      const topResults = data.slice(0, 5) as SearchResultItem[];
 
       // Tiếp tục xử lý với topResults, ví dụ:
-      const contexts = topResults.map((item: any) => item.payload.text).join('\n---\n');
+      const contexts = topResults.map((item: SearchResultItem) => item.payload.text).join('\n---\n');
 
       if (!contexts) {
         setAnswer('Không tìm thấy thông tin liên quan đến câu hỏi của bạn.');
