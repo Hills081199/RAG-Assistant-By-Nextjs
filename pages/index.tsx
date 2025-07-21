@@ -104,8 +104,18 @@ export default function Home() {
       
       const data = await res.json();
       console.log('Search results:', data);
-      // 3. Create context from search results
-      const contexts = data
+      
+      // Filter results by score threshold (0.3)
+      const filteredResults = data.filter((item: { score?: number }) => (item.score ?? 0) >= 0.3);
+      
+      if (filteredResults.length === 0) {
+        setAnswer('Không tìm thấy thông tin liên quan trong cơ sở dữ liệu. Vui lòng thử lại với từ khóa khác hoặc mô tả chi tiết hơn.');
+        setLoading(false);
+        return;
+      }
+      
+      // 3. Create context from filtered search results
+      const contexts = filteredResults
         .map((item: { payload: { text: string } }) => item.payload?.text)
         .filter((text: string): text is string => Boolean(text))
         .join('\n\n');
@@ -116,53 +126,44 @@ export default function Home() {
         return;
       }
 
-      const prompt = `Bạn là một chuyên gia nghiên cứu về quy hoạch đô thị và phát triển bền vững với kinh nghiệm sâu rộng trong phân tích tài liệu học thuật. Nhiệm vụ của bạn là hỗ trợ người dùng nghiên cứu thông qua việc phân tích và tổng hợp thông tin một cách khách quan, chính xác.
+      const prompt = `Bạn là trợ lý nghiên cứu chuyên về quy hoạch đô thị và phát triển bền vững. Nhiệm vụ của bạn là phân tích CHÍNH XÁC thông tin từ tài liệu được cung cấp.
 
-## NGUYÊN TẮC PHÂN TÍCH:
-- Luôn dựa trên bằng chứng từ tài liệu tham khảo
-- Phân biệt rõ giữa sự kiện và quan điểm
-- Chỉ ra những điểm chưa rõ hoặc cần nghiên cứu thêm
-- Sử dụng thuật ngữ chuyên ngành chính xác
+## NGUYÊN TẮC QUAN TRỌNG NHẤT:
+- CHỈ sử dụng thông tin có trong tài liệu tham khảo
+- KHÔNG bịa đặt, suy đoán hoặc thêm thông tin không có
+- Nếu không đủ thông tin để trả lời, hãy NÓI RÕ điều này
+- Phân biệt rõ giữa thông tin CHẮC CHẮN và thông tin CÓ THỂ
 
 ## THÔNG TIN THAM KHẢO:
 ${contexts}
 
-## CÂU HỎI NGHIÊN CỨU:
+## CÂU HỎI:
 ${question}
 
-## YÊU CẦU ĐỊNH DẠNG CÂU TRẢ LỜI:
+## YÊU CẦU TRẢ LỜI:
 
-### 1. BỐI CẢNH VÀ TÍNH QUAN TRỌNG (150-200 từ)
-- Giải thích tại sao câu hỏi này quan trọng trong lĩnh vực quy hoạch đô thị
-- Đặt vấn đề trong bối cảnh nghiên cứu rộng hơn
-- Nêu rõ phạm vi và giới hạn của phân tích
+### 1. THÔNG TIN CÓ SẴN (từ tài liệu)
+- Trình bày chính xác những gì tài liệu đã nêu
+- Trích dẫn cụ thể các đoạn/số liệu liên quan
+- Không diễn giải quá mức
 
-### 2. PHÂN TÍCH CHI TIẾT (400-600 từ)
-- **Phân tích chính:** Trình bày các điểm chính từ tài liệu tham khảo
-- **Bằng chứng cụ thể:** Trích dẫn số liệu, ví dụ thực tế, nghiên cứu case study
-- **So sánh và đối chiếu:** Phân tích các quan điểm khác nhau nếu có
-- **Đánh giá phê phán:** Chỉ ra điểm mạnh/yếu của các luận điểm
+### 2. PHÂN TÍCH DỰA TRÊN THÔNG TIN CÓ SẴN
+- Chỉ phân tích dựa trên dữ liệu trong tài liệu
+- Nếu có nhiều quan điểm khác nhau, nêu rõ từng quan điểm
+- Không đưa ra kết luận vượt quá thông tin được cung cấp
 
-### 3. KẾT LUẬN VÀ ĐỊNH HƯỚNG (150-200 từ)
-- Tổng hợp các phát hiện chính
-- Đưa ra nhận định dựa trên phân tích
-- **Gợi ý nghiên cứu tiếp theo:**
-  - Các tài liệu nên tìm hiểu thêm
-  - Phương pháp nghiên cứu phù hợp
-  - Câu hỏi nghiên cứu mở rộng
+### 3. NHỮNG ĐIỀU CHƯA RÕ HOẶC THIẾU
+- Liệt kê rõ ràng những thông tin cần thiết nhưng không có trong tài liệu
+- Những câu hỏi không thể trả lời được với thông tin hiện có
+- Đề xuất cần tìm thêm nguồn thông tin nào cụ thể
 
-### 4. HẠN CHẾ VÀ LƯU Ý
-- Nêu rõ những hạn chế của phân tích hiện tại
-- Khuyến nghị xác minh thông tin từ nhiều nguồn
+## LƯU Ý BẮT BUỘC:
+- Nếu tài liệu không đề cập đến câu hỏi: "Tài liệu không cung cấp thông tin về vấn đề này"
+- Nếu thông tin không đủ để kết luận: "Dựa trên thông tin hiện có, chưa thể đưa ra kết luận chắc chắn"
+- Sử dụng cụm từ: "Theo tài liệu...", "Tài liệu nêu rõ...", "Không có thông tin về..."
+- Trả lời bằng tiếng Việt, ngôn ngữ rõ ràng, chính xác
 
-## LƯU Ý QUAN TRỌNG:
-- Sử dụng ngôn ngữ học thuật nhưng dễ hiểu
-- Trả lời bằng tiếng Việt chuẩn, tránh lỗi chính tả
-- Nếu thông tin tham khảo không đủ để trả lời đầy đủ, hãy nêu rõ điều này
-- Không bịa đặt thông tin không có trong tài liệu tham khảo
-- Đánh số trang hoặc nguồn tham chiếu nếu có thể
-
-Hãy bắt đầu phân tích theo cấu trúc trên.`;
+BẮT ĐẦU PHÂN TÍCH NGAY, CHỈ DỰA TRÊN THÔNG TIN CÓ TRONG TÀI LIỆU:`;
 
       // 4. Call Chat Completion with GPT-3.5-turbo
       const chatCompletion = await openai.chat.completions.create({
@@ -200,8 +201,21 @@ Hãy bắt đầu phân tích theo cấu trúc trên.`;
 
       let errorMessage = 'Có lỗi xảy ra khi truy vấn.';
 
+      interface ApiError extends Error {
+        code?: string;
+        response?: {
+          status?: number;
+          data?: {
+            error?: {
+              message?: string;
+            };
+            message?: string;
+          };
+        };
+      }
+
       if (err && typeof err === 'object') {
-        const errorObj = err as any;
+        const errorObj = err as ApiError;
         
         // Handle network errors
         if (errorObj.code === 'ERR_NETWORK' || errorObj.message?.includes('Network Error')) {
