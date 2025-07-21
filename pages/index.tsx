@@ -293,7 +293,7 @@ export default function Home() {
       const res = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ embedding, limit: 15 })
+        body: JSON.stringify({ embedding, limit: 5 })
       });
 
       if (!res.ok) {
