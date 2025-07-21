@@ -200,19 +200,30 @@ Hãy bắt đầu phân tích theo cấu trúc trên.`;
 
       let errorMessage = 'Có lỗi xảy ra khi truy vấn.';
 
-      if (axios.isAxiosError(err)) {
-        if (err.code === 'ERR_NETWORK') {
+      if (err && typeof err === 'object') {
+        const errorObj = err as any;
+        
+        // Handle network errors
+        if (errorObj.code === 'ERR_NETWORK' || errorObj.message?.includes('Network Error')) {
           errorMessage = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.';
-        } else if (err.response?.status === 401) {
-          errorMessage = 'API key không hợp lệ. Vui lòng kiểm tra lại.';
-        } else if (err.response?.status === 404) {
-          errorMessage = 'Không tìm thấy collection trong Qdrant.';
-        } else if (err.response?.status === 429) {
-          errorMessage = 'Đã vượt quá giới hạn API. Vui lòng thử lại sau.';
-        } else if (err.response?.status === 400) {
-          errorMessage = 'Yêu cầu không hợp lệ. Vui lòng kiểm tra câu hỏi hoặc cấu hình.';
-        } else {
-          errorMessage = `Lỗi từ máy chủ: ${err.response?.data?.error?.message || 'Không xác định'}`;
+        } 
+        // Handle response errors
+        else if (errorObj.response) {
+          const status = errorObj.response.status;
+          const data = errorObj.response.data;
+          
+          if (status === 401) {
+            errorMessage = 'API key không hợp lệ. Vui lòng kiểm tra lại.';
+          } else if (status === 404) {
+            errorMessage = 'Không tìm thấy collection trong Qdrant.';
+          } else if (status === 429) {
+            errorMessage = 'Đã vượt quá giới hạn API. Vui lòng thử lại sau.';
+          } else if (status === 400) {
+            errorMessage = 'Yêu cầu không hợp lệ. Vui lòng kiểm tra câu hỏi hoặc cấu hình.';
+          } else {
+            const errorMessageFromServer = data?.error?.message || data?.message;
+            errorMessage = `Lỗi từ máy chủ: ${errorMessageFromServer || 'Không xác định'}`;
+          }
         }
       } else if (err instanceof Error) {
         errorMessage = `Lỗi: ${err.message}`;
