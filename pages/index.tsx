@@ -787,8 +787,12 @@ class UrbanPlanningRAG {
 interface SearchResultItem {
   payload: {
     text: string;
-  };
-  score?: number;
+    source_file?: string;  // Make optional with ?
+    start_page?: string | number;
+    end_page?: string | number;
+  }
+  text: string
+  score?: number
 }
 
 // Config should be stored in an .env file and accessed via process.env
@@ -816,6 +820,7 @@ const ragSystem = new UrbanPlanningRAG();
 export default function Home() {
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
+  const [sources, setSources] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<{ question: string; answer: string; timestamp: string; isValidated?: boolean; validationIssues?: string[] }[]>([]);
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
@@ -895,10 +900,11 @@ export default function Home() {
       }
       
       const data = await res.json();
-      console.log('Search results:', data);
+      const sortedDataByScore = data.sort((a: SearchResultItem, b: SearchResultItem) => (b.score ?? 0) - (a.score ?? 0));
+      console.log('Search results:', sortedDataByScore);
       
       // Get top results
-      const topResults = data.slice(0, 10) as SearchResultItem[];
+      const topResults = sortedDataByScore.slice(0, 10) as SearchResultItem[];
       const contexts = topResults.map((item: SearchResultItem) => item.payload.text).join('\n---\n');
 
       if (!contexts) {
@@ -932,7 +938,32 @@ export default function Home() {
       });
 
       const response = chatCompletion.choices[0].message.content;
-      const finalAnswer = response || 'Không nhận được phản hồi từ hệ thống.';
+      
+      // Format source information
+      const formatSourceInfo = (result: SearchResultItem) => {
+        const sourceFile = result.payload?.source_file || 'N/A';
+        const startPage = result.payload?.start_page || 'N/A';
+        const endPage = result.payload?.end_page || 'N/A';
+        return `Nguồn: ${sourceFile} (Trang ${startPage}-${endPage})`;
+      };
+
+      // Get unique sources
+      const uniqueSources = Array.from(
+        new Set(
+          topResults
+            .filter(result => result.payload?.source_file)
+            .map(result => formatSourceInfo(result))
+        )
+      );
+
+      // Add sources to the answer
+      const sourcesSection = uniqueSources.length > 0 
+        ? `\n\n**Nguồn tham khảo:**\n${uniqueSources.join('\n')}` 
+        : '';
+      
+      setSources(uniqueSources);
+      
+      const finalAnswer = (response || 'Không nhận được phản hồi từ hệ thống.') 
       
       // 5. Validate the response
       const validation = ragSystem.validateResponse(finalAnswer);
@@ -945,7 +976,7 @@ export default function Home() {
       setAnswer(finalAnswer);
       saveHistory({ 
         question, 
-        answer: finalAnswer, 
+        answer: finalAnswer + sourcesSection, 
         timestamp: new Date().toISOString(),
         isValidated: validation.isValid,
         validationIssues: validation.issues
@@ -1195,6 +1226,12 @@ export default function Home() {
           <div className="answer-card">
             <div className="answer-label">Kết quả phân tích:</div>
             <div className="answer-text">{answer}</div>
+            <div className="answer-text">Nguồn tham khảo:</div>
+            <div className="answer-text">
+            {sources.map((source: string, index: number) => (
+              <div key={index}>{source}</div>
+            ))}
+            </div>
           </div>
         )}
 
