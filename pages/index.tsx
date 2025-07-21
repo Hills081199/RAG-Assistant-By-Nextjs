@@ -882,7 +882,7 @@ export default function Home() {
 
       // 1. Get embedding from OpenAI
       const embeddingResponse = await openai.embeddings.create({
-        model: 'text-embedding-3-small',
+        model: 'text-embedding-3-large',
         input: question,
       });
 
