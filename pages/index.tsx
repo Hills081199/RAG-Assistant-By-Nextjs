@@ -1,489 +1,397 @@
-import { useState } from 'react';
-import ListeningComponent from '@/components/Listening';
-import ReadingComponent from '@/components/Reading';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import OpenAI from 'openai';
+import { QdrantClient } from '@qdrant/js-client-rest';
 
-const Home: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'listening' | 'reading'>('listening');
+// Config should be stored in an .env file and accessed via process.env
+const QDRANT_URL = process.env.NEXT_PUBLIC_QDRANT_URL;
+const QDRANT_COLLECTION = process.env.NEXT_PUBLIC_QDRANT_COLLECTION;
+const QDRANT_API_KEY = process.env.NEXT_PUBLIC_QDRANT_API_KEY;
+const OPENAI_API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+const qdrantClient = new QdrantClient({
+  url: QDRANT_URL,
+  apiKey: QDRANT_API_KEY,
+});
+console.log(qdrantClient)
+
+const ITEMS_PER_PAGE = 5; // Number of items per page
+const MAX_HISTORY_ITEMS = 50; // Maximum history items to store
+const openai = new OpenAI({
+  apiKey: OPENAI_API_KEY,
+  dangerouslyAllowBrowser: true // Only for client-side usage
+});
+export default function Home() {
+  const [question, setQuestion] = useState('');
+  const [answer, setAnswer] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [history, setHistory] = useState<{ question: string; answer: string; timestamp: string }[]>([]);
+  const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [searchKeyword, setSearchKeyword] = useState('');
+
+  useEffect(() => {
+    loadHistory();
+  }, []);
+
+  const loadHistory = () => {
+    try {
+      const savedHistory = localStorage.getItem('questionHistory');
+      if (savedHistory) {
+        setHistory(JSON.parse(savedHistory));
+      }
+    } catch (err) {
+      console.error('Error loading history:', err);
+    }
+  };
+
+  const saveHistory = (newEntry: { question: string; answer: string; timestamp: string }) => {
+    try {
+      const updatedHistory = [...history, newEntry].slice(-MAX_HISTORY_ITEMS);
+      setHistory(updatedHistory);
+      localStorage.setItem('questionHistory', JSON.stringify(updatedHistory));
+    } catch (err) {
+      console.error('Error saving history:', err);
+    }
+  };
+
+  const filteredHistory = history.filter(
+    (item) =>
+      searchKeyword === '' ||
+      item.question.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+      item.answer.toLowerCase().includes(searchKeyword.toLowerCase())
+  ).reverse();
+
+  const totalPages = Math.ceil(filteredHistory.length / ITEMS_PER_PAGE);
+  const startIndex = (historyPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedHistory = filteredHistory.slice(startIndex, endIndex);
+
+  const askQuestion = async () => {
+    if (!question.trim()) {
+      alert('Vui lòng nhập câu hỏi');
+      return;
+    }
+
+    if (!QDRANT_URL || !QDRANT_COLLECTION || !QDRANT_API_KEY || !OPENAI_API_KEY) {
+      alert('Thiếu thông tin cấu hình API. Vui lòng kiểm tra cấu hình');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setAnswer('');
+
+      // 1. Get embedding from OpenAI
+      const embeddingResponse = await openai.embeddings.create({
+        model: 'text-embedding-3-small',
+        input: question,
+      });
+
+      const embedding = embeddingResponse.data[0].embedding;
+      const res = await fetch('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ embedding, limit: 5 })
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        console.error('Search API error:', error);
+        throw new Error(error.message || 'Failed to search');
+      }
+      
+      const data = await res.json();
+      console.log('Search results:', data);
+      // 3. Create context from search results
+      const contexts = data
+        .map((item: { payload: { text: string } }) => item.payload?.text)
+        .filter((text: string): text is string => Boolean(text))
+        .join('\n\n');
+
+      if (!contexts) {
+        setAnswer('Không tìm thấy thông tin liên quan đến câu hỏi của bạn.');
+        saveHistory({ question, answer: 'Không tìm thấy thông tin liên quan.', timestamp: new Date().toISOString() });
+        return;
+      }
+
+      const prompt = `Bạn là một trợ lý nghiên cứu chuyên về quy hoạch đô thị và phát triển bền vững, hỗ trợ người dùng trong việc nghiên cứu tài liệu. Dựa trên thông tin tham khảo dưới đây, hãy trả lời câu hỏi một cách chi tiết, rõ ràng và có cấu trúc, phù hợp với mục đích nghiên cứu học thuật. Câu trả lời cần bao gồm:
+1. Một đoạn giới thiệu ngắn giải thích bối cảnh của câu hỏi.
+2. Phân tích chi tiết dựa trên thông tin tham khảo, sử dụng các ví dụ cụ thể nếu có.
+3. Kết luận ngắn gọn và gợi ý các tài liệu hoặc hướng nghiên cứu bổ sung nếu phù hợp.
+
+Thông tin tham khảo:
+${contexts}
+
+Câu hỏi: ${question}
+
+Hãy trả lời bằng tiếng Việt, sử dụng ngôn ngữ học thuật, dễ hiểu và chính xác.`;
+
+      // 4. Call Chat Completion with GPT-3.5-turbo
+      const chatCompletion = await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'Bạn là chuyên gia nghiên cứu về quy hoạch đô thị và phát triển bền vững. Trả lời các câu hỏi bằng tiếng Việt với phong cách học thuật, chi tiết, và dễ hiểu, hỗ trợ người dùng trong việc nghiên cứu tài liệu.',
+          },
+          { role: 'user', content: prompt },
+        ],
+        max_tokens: 1500,
+        temperature: 0.6,
+      });
+
+      const response = chatCompletion.choices[0].message.content;
+      setAnswer(response || 'Không nhận được phản hồi từ hệ thống.');
+      saveHistory({ question, answer: response || '', timestamp: new Date().toISOString() });
+    } catch (err: Error | unknown) {
+      console.error(
+        'Error details:',
+        err instanceof Error
+          ? {
+              message: err.message,
+              ...(axios.isAxiosError(err)
+                ? {
+                    status: err.response?.status,
+                    data: err.response?.data,
+                  }
+                : {}),
+            }
+          : 'An unknown error occurred'
+      );
+
+      let errorMessage = 'Có lỗi xảy ra khi truy vấn.';
+
+      if (axios.isAxiosError(err)) {
+        if (err.code === 'ERR_NETWORK') {
+          errorMessage = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.';
+        } else if (err.response?.status === 401) {
+          errorMessage = 'API key không hợp lệ. Vui lòng kiểm tra lại.';
+        } else if (err.response?.status === 404) {
+          errorMessage = 'Không tìm thấy collection trong Qdrant.';
+        } else if (err.response?.status === 429) {
+          errorMessage = 'Đã vượt quá giới hạn API. Vui lòng thử lại sau.';
+        } else if (err.response?.status === 400) {
+          errorMessage = 'Yêu cầu không hợp lệ. Vui lòng kiểm tra câu hỏi hoặc cấu hình.';
+        } else {
+          errorMessage = `Lỗi từ máy chủ: ${err.response?.data?.error?.message || 'Không xác định'}`;
+        }
+      } else if (err instanceof Error) {
+        errorMessage = `Lỗi: ${err.message}`;
+      }
+
+      setAnswer(errorMessage);
+      saveHistory({ question, answer: errorMessage, timestamp: new Date().toISOString() });
+      alert(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const clearHistory = () => {
+    if (confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử câu hỏi?')) {
+      try {
+        localStorage.removeItem('questionHistory');
+        setHistory([]);
+        setExpandedItems(new Set());
+        setHistoryPage(1);
+        setSearchKeyword('');
+        alert('Lịch sử câu hỏi đã được xóa.');
+      } catch (err) {
+        console.error('Error clearing history:', err);
+        alert('Không thể xóa lịch sử câu hỏi.');
+      }
+    }
+  };
+
+  const toggleHistoryVisibility = () => {
+    setShowHistory(!showHistory);
+    if (!showHistory) {
+      setHistoryPage(1);
+    }
+  };
+
+  const goToPage = (page: number) => {
+    setHistoryPage(page);
+    setExpandedItems(new Set());
+  };
+
+  const renderHistoryItem = (item: { question: string; answer: string; timestamp: string }, index: number) => {
+    const actualIndex = startIndex + index;
+    const isExpanded = expandedItems.has(actualIndex);
+    const shouldTruncate = item.answer.length > 150;
+
+    const toggleExpanded = () => {
+      const newExpanded = new Set(expandedItems);
+      if (isExpanded) {
+        newExpanded.delete(actualIndex);
+      } else {
+        newExpanded.add(actualIndex);
+      }
+      setExpandedItems(newExpanded);
+    };
+
+    return (
+      <div className="history-item" key={actualIndex}>
+        <div className="history-item-header">
+          <span className="history-question">Q: {item.question}</span>
+          <span className="history-timestamp">
+            {new Date(item.timestamp).toLocaleDateString('vi-VN', {
+              day: '2-digit',
+              month: '2-digit',
+              year: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </span>
+        </div>
+        <div className="history-answer-label">Trả lời:</div>
+        <div className="history-answer">
+          {isExpanded || !shouldTruncate ? item.answer : `${item.answer.substring(0, 150)}...`}
+        </div>
+        {shouldTruncate && (
+          <button onClick={toggleExpanded} className="expand-button">
+            {isExpanded ? '↑ Thu gọn' : '↓ Xem thêm'}
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  const renderPaginationControls = () => {
+    if (totalPages <= 1) return null;
+
+    const pages = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(
+        <button
+          key={i}
+          className={`page-button ${historyPage === i ? 'active-page-button' : ''}`}
+          onClick={() => goToPage(i)}
+        >
+          {i}
+        </button>
+      );
+    }
+
+    return (
+      <div className="pagination-container">
+        <button
+          className={`nav-button ${historyPage === 1 ? 'nav-button-disabled' : ''}`}
+          onClick={() => goToPage(Math.max(1, historyPage - 1))}
+          disabled={historyPage === 1}
+        >
+          ← Trước
+        </button>
+        <div className="pages-container">{pages}</div>
+        <button
+          className={`nav-button ${historyPage === totalPages ? 'nav-button-disabled' : ''}`}
+          onClick={() => goToPage(Math.min(totalPages, historyPage + 1))}
+          disabled={historyPage === totalPages}
+        >
+          Sau →
+        </button>
+      </div>
+    );
+  };
 
   return (
-    <>
-      <style>
-        {`
-          @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-
-          @keyframes slideUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-          }
-
-          @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-          }
-
-          @keyframes slideIn {
-            from { transform: translateX(-20px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-          }
-
-          * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-          }
-
-          body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-          }
-
-          .navbar {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            padding: 0 2rem;
-          }
-
-          .navbar-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1rem 0;
-          }
-
-          .logo {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #2b3a67;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-          }
-
-          .nav-tabs {
-            display: flex;
-            gap: 1rem;
-          }
-
-          .nav-tab {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            background: transparent;
-            border-radius: 25px;
-            font-size: 1rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: #4a5568;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-          }
-
-          .nav-tab:hover {
-            background: rgba(30, 136, 229, 0.1);
-            color: #1e88e5;
-            transform: translateY(-2px);
-          }
-
-          .nav-tab.active {
-            background: linear-gradient(135deg, #1e88e5, #1565c0);
-            color: white;
-            box-shadow: 0 4px 12px rgba(30, 136, 229, 0.3);
-          }
-
-          .nav-tab.active:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(30, 136, 229, 0.4);
-          }
-
-          .main-container {
-            max-width: 1000px;
-            margin: 2rem auto;
-            padding: 0 2rem;
-          }
-
-          .tab-content {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 2rem;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            animation: fadeIn 0.5s ease-out;
-          }
-
-          .section-header {
-            text-align: center;
-            margin-bottom: 2rem;
-          }
-
-          .section-header h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: #2b3a67;
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-          }
-
-          .section-header p {
-            color: #4a5568;
-            font-size: 1.1rem;
-            opacity: 0.8;
-          }
-
-          .instructions {
-            background: linear-gradient(135deg, #e3f2fd, #f3e5f5);
-            padding: 1.5rem;
-            border-radius: 12px;
-            margin-bottom: 2rem;
-            border-left: 4px solid #1e88e5;
-          }
-
-          .instructions h3 {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #1e88e5;
-            margin-bottom: 0.5rem;
-          }
-
-          .instructions p {
-            color: #4a5568;
-            font-size: 1rem;
-            line-height: 1.6;
-          }
-
-          .instructions p span {
-            color: #d81b60;
-            font-weight: 600;
-          }
-
-          .level-selector {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            padding: 1rem;
-            background: rgba(248, 250, 252, 0.8);
-            border-radius: 12px;
-          }
-
-          .level-selector label {
-            font-size: 1.1rem;
-            font-weight: 500;
-            color: #2b3a67;
-          }
-
-          .level-selector select {
-            padding: 10px 30px 10px 15px;
-            font-size: 1rem;
-            color: #2b3a67;
-            border: 2px solid #90caf9;
-            border-radius: 8px;
-            background: #fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"><path fill="%232b3a67" d="M7 10l5 5 5-5H7z"/></svg>') no-repeat right 10px center;
-            background-size: 12px;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            transition: all 0.3s ease;
-            min-width: 200px;
-          }
-
-          .level-selector select:focus {
-            outline: none;
-            border-color: #1e88e5;
-            box-shadow: 0 0 12px rgba(30, 136, 229, 0.3);
-          }
-
-          button {
-            padding: 12px 24px;
-            font-size: 1rem;
-            font-weight: 600;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-          }
-
-          button:disabled {
-            background: #b0bec5;
-            cursor: not-allowed;
-            opacity: 0.6;
-          }
-
-          .generate-btn {
-            background: linear-gradient(135deg, #1e88e5, #1565c0);
-            color: #fff;
-            width: 100%;
-            margin-bottom: 1rem;
-          }
-
-          .generate-btn:hover:not(:disabled) {
-            background: linear-gradient(135deg, #1565c0, #0d47a1);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(30, 136, 229, 0.3);
-          }
-
-          .generate-btn.speaking {
-            background: linear-gradient(135deg, #ff9800, #f57c00);
-            animation: pulse 1.5s infinite;
-          }
-
-          .exercise-section {
-            margin-top: 2rem;
-            animation: slideUp 0.6s ease-out;
-          }
-
-          .exercise-section h3 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #2b3a67;
-            margin-bottom: 1rem;
-          }
-
-          .exercise-section p {
-            font-size: 1.2rem;
-            color: #4a5568;
-            background: rgba(249, 250, 251, 0.8);
-            padding: 1.5rem;
-            border-radius: 12px;
-            line-height: 1.8;
-            border-left: 4px solid #43a047;
-          }
-
-          .speak-btn {
-            background: linear-gradient(135deg, #43a047, #2e7d32);
-            color: #fff;
-            margin-top: 1rem;
-          }
-
-          .speak-btn:hover:not(:disabled) {
-            background: linear-gradient(135deg, #2e7d32, #1b5e20);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(67, 160, 71, 0.3);
-          }
-
-          .speak-btn.speaking {
-            background: linear-gradient(135deg, #ff5722, #d84315);
-            animation: pulse 1.5s infinite;
-          }
-
-          .status-indicator {
-            margin-top: 1rem;
-            padding: 1rem;
-            border-radius: 12px;
-            text-align: center;
-            font-weight: 500;
-            font-size: 0.95rem;
-          }
-
-          .status-indicator.not-listened {
-            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
-            color: #f57c00;
-            border: 2px solid #ffb74d;
-          }
-
-          .status-indicator.listened {
-            background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
-            color: #2e7d32;
-            border: 2px solid #81c784;
-          }
-
-          .input-section h4 {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: #2b3a67;
-            margin: 2rem 0 1rem;
-          }
-
-          .input-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-          }
-
-          .input-container input {
-            width: 120px;
-            padding: 12px;
-            font-size: 1rem;
-            border: 2px solid #90caf9;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.9);
-          }
-
-          .input-container input:focus {
-            outline: none;
-            border-color: #1e88e5;
-            box-shadow: 0 0 12px rgba(30, 136, 229, 0.3);
-            background: white;
-          }
-
-          .submit-btn {
-            background: linear-gradient(135deg, #d81b60, #b1134f);
-            color: #fff;
-            width: 100%;
-            margin-top: 1rem;
-          }
-
-          .submit-btn:hover:not(:disabled) {
-            background: linear-gradient(135deg, #b1134f, #8e0038);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(216, 27, 96, 0.3);
-          }
-
-          .results-section {
-            margin-top: 2rem;
-            background: rgba(248, 250, 252, 0.5);
-            padding: 1.5rem;
-            border-radius: 12px;
-          }
-
-          .results-section h4 {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: #2b3a67;
-            margin-bottom: 1rem;
-          }
-
-          .results-section ul {
-            list-style: none;
-            padding: 0;
-          }
-
-          .results-section li {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-size: 1rem;
-            margin-bottom: 0.75rem;
-            padding: 0.5rem;
-            border-radius: 6px;
-            transition: all 0.3s ease;
-          }
-
-          .results-section li.correct {
-            color: #2e7d32;
-            background: rgba(200, 230, 201, 0.3);
-          }
-
-          .results-section li.incorrect {
-            color: #d32f2f;
-            background: rgba(255, 205, 210, 0.3);
-          }
-
-          .score {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #2b3a67;
-            margin-top: 1.5rem;
-            text-align: center;
-            padding: 1rem;
-            background: linear-gradient(135deg, #e3f2fd, #f3e5f5);
-            border-radius: 12px;
-          }
-
-          .score .perfect {
-            color: #f9a825;
-            font-weight: 700;
-            margin-left: 0.5rem;
-            animation: pulse 2s infinite;
-          }
-
-          .reading-section {
-            animation: slideIn 0.5s ease-out;
-          }
-
-          @media (max-width: 768px) {
-            .navbar-content {
-              flex-direction: column;
-              gap: 1rem;
-              padding: 1rem 0;
-            }
-
-            .nav-tabs {
-              width: 100%;
-              justify-content: center;
-            }
-
-            .nav-tab {
-              flex: 1;
-              text-align: center;
-            }
-
-            .main-container {
-              padding: 0 1rem;
-            }
-
-            .section-header h1 {
-              font-size: 2rem;
-            }
-
-            .input-container {
-              justify-content: center;
-            }
-
-            .level-selector {
-              flex-direction: column;
-              text-align: center;
-            }
-          }
-        `}
-      </style>
-      
-      {/* Navbar */}
-      <nav className="navbar">
-        <div className="navbar-content">
-          <div className="logo">
-            <span>🧠</span>
-            Chinese Learning Hub
-          </div>
-          <div className="nav-tabs">
-            <button 
-              className={`nav-tab ${activeTab === 'listening' ? 'active' : ''}`}
-              onClick={() => setActiveTab('listening')}
-            >
-              <span>🎧</span>
-              Listening
-            </button>
-            <button 
-              className={`nav-tab ${activeTab === 'reading' ? 'active' : ''}`}
-              onClick={() => setActiveTab('reading')}
-            >
-              <span>📖</span>
-              Reading
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      {/* Main Content */}
-      <div className="main-container">
-        <div className="tab-content">
-          {activeTab === 'listening' && <ListeningComponent />}
-          {activeTab === 'reading' && <ReadingComponent /> } 
-        </div>
-        {/* <LoginPage /> */}
+    <div className="container">
+      <div className="header">
+        <h1 className="header-title">Trợ lý Nghiên cứu Quy hoạch</h1>
+        <p className="header-subtitle">Hỗ trợ nghiên cứu tài liệu quy hoạch đô thị</p>
       </div>
-    </>
-  );
-};
 
-export default Home;
+      <div className="input-section">
+        <textarea
+          className="input"
+          placeholder="Nhập câu hỏi về quy hoạch đô thị hoặc phát triển bền vững..."
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          disabled={loading}
+        />
+        <div className="button-container">
+          <button
+            className={`ask-button ${loading ? 'button-disabled' : ''}`}
+            onClick={askQuestion}
+            disabled={loading}
+          >
+            {loading ? (
+              <span className="loading-container">
+                <span className="spinner"></span> Đang xử lý...
+              </span>
+            ) : (
+              'Gửi câu hỏi'
+            )}
+          </button>
+          <button
+            className={`history-toggle-button ${loading ? 'button-disabled' : ''}`}
+            onClick={toggleHistoryVisibility}
+            disabled={loading}
+          >
+            {showHistory ? 'Ẩn lịch sử' : `Lịch sử (${history.length})`}
+          </button>
+          <button
+            className={`clear-button ${loading ? 'button-disabled' : ''}`}
+            onClick={clearHistory}
+            disabled={loading}
+          >
+            Xóa lịch sử
+          </button>
+        </div>
+      </div>
+
+      <div className="answer-section">
+        {answer && (
+          <div className="answer-card">
+            <div className="answer-label">Trả lời:</div>
+            <div className="answer-text">{answer}</div>
+          </div>
+        )}
+
+        {showHistory && (
+          <div className="history-section">
+            <div className="history-header">
+              <h2 className="history-label">Lịch sử câu hỏi ({filteredHistory.length})</h2>
+              <input
+                className="search-input"
+                placeholder="Tìm kiếm trong lịch sử..."
+                value={searchKeyword}
+                onChange={(e) => {
+                  setSearchKeyword(e.target.value);
+                  setHistoryPage(1);
+                }}
+              />
+            </div>
+
+            {filteredHistory.length > 0 ? (
+              <>
+                <div className="history-list">
+                  {paginatedHistory.map((item, index) => renderHistoryItem(item, index))}
+                </div>
+                {renderPaginationControls()}
+                <div className="pagination-info">
+                  Hiển thị {startIndex + 1}-{Math.min(endIndex, filteredHistory.length)} /{' '}
+                  {filteredHistory.length} mục
+                </div>
+              </>
+            ) : (
+              <div className="empty-history-container">
+                <p className="empty-history-text">
+                  {searchKeyword ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có lịch sử câu hỏi'}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export const getServerSideProps = async () => {
+  return {
+    props: {}, // No server-side props needed
+  };
+};
