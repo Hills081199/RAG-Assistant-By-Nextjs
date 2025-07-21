@@ -100,25 +100,25 @@
 //         headers: { 'Content-Type': 'application/json' },
 //         body: JSON.stringify({ embedding, limit: 15 })
 //       });
-      
+
 //       if (!res.ok) {
 //         const error = await res.json();
 //         console.error('Search API error:', error);
 //         throw new Error(error.message || 'Failed to search');
 //       }
-      
+
 //       const data = await res.json();
 //       console.log('Search results:', data);
-      
+
 //       // // Filter results by score threshold (0.3)
 //       // const filteredResults = data.filter((item: { score?: number }) => (item.score ?? 0) >= 0.3);
-      
+
 //       // if (filteredResults.length === 0) {
 //       //   setAnswer('Không tìm thấy thông tin liên quan trong cơ sở dữ liệu. Vui lòng thử lại với từ khóa khác hoặc mô tả chi tiết hơn.');
 //       //   setLoading(false);
 //       //   return;
 //       // }
-      
+
 //       // // 3. Create context from filtered search results
 //       // const contexts = filteredResults
 //       // Nếu không filter score, chỉ lấy top N kết quả
@@ -295,7 +295,7 @@
 
 //       if (err && typeof err === 'object') {
 //         const errorObj = err as ApiError;
-        
+
 //         // Handle network errors
 //         if (errorObj.code === 'ERR_NETWORK' || errorObj.message?.includes('Network Error')) {
 //           errorMessage = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.';
@@ -304,7 +304,7 @@
 //         else if (errorObj.response) {
 //           const status = errorObj.response.status;
 //           const data = errorObj.response.data;
-          
+
 //           if (status === 401) {
 //             errorMessage = 'API key không hợp lệ. Vui lòng kiểm tra lại.';
 //           } else if (status === 404) {
@@ -638,70 +638,18 @@ const urbanPlanningRAGPrompt: PromptTemplate = {
   systemPrompt: `Bạn là chuyên gia cao cấp trong lĩnh vực quy hoạch đô thị, am hiểu sâu rộng về quy hoạch không gian, phát triển bền vững, kinh tế đô thị, chính sách đất đai, hạ tầng kỹ thuật, giao thông, môi trường và biến đổi khí hậu. Nhiệm vụ của bạn là phân tích và trích xuất thông tin chính xác từ tài liệu quy hoạch, cung cấp nhận định dựa trên dữ liệu, đồng thời đảm bảo mọi lập luận đều dựa trên nguồn tham chiếu rõ ràng và kiến thức chuyên môn được kiểm chứng.`,
 
   generatePrompt: (config: RAGPromptConfig): string => {
-    return `
-Bạn là chuyên gia cao cấp về quy hoạch đô thị, có trách nhiệm phân tích tài liệu với độ chính xác tuyệt đối, đảm bảo mọi kết luận đều được dẫn chứng rõ ràng từ tài liệu hoặc dựa trên kiến thức chuyên môn đã được thẩm định.
+    return `Bạn là một trợ lý nghiên cứu chuyên về quy hoạch đô thị và phát triển bền vững, hỗ trợ người dùng trong việc nghiên cứu tài liệu. Dựa trên thông tin tham khảo dưới đây, hãy trả lời câu hỏi một cách chi tiết, rõ ràng và có cấu trúc, phù hợp với mục đích nghiên cứu học thuật. Câu trả lời cần bao gồm:
+1. Một đoạn giới thiệu ngắn giải thích bối cảnh của câu hỏi.
+2. Phân tích chi tiết dựa trên thông tin tham khảo, sử dụng các ví dụ cụ thể nếu có.
+3. Kết luận ngắn gọn và gợi ý các tài liệu hoặc hướng nghiên cứu bổ sung nếu phù hợp.
 
----
+Thông tin tham khảo:
+${config.contexts}
 
-**NGUYÊN TẮC PHÂN TÍCH**:
-1. **Tuyệt đối không**:
-   - Bịa đặt, phỏng đoán hoặc đưa thêm thông tin ngoài tài liệu.
-   - Dùng kiến thức tổng quát khi tài liệu không đề cập.
-   - Đưa số liệu, dữ kiện khi không có trong tài liệu.
+Câu hỏi: ${config.question}
 
-2. **Bắt buộc**:
-   - **Trích dẫn chính xác, đầy đủ nguồn (trang/đoạn/chương).**
-   - Phân biệt rõ thông tin chắc chắn và thông tin có điều kiện.
-   - Nếu thiếu dữ kiện, cần chỉ rõ và nêu lý do không thể trả lời.
-   - Khi dùng kiến thức chuyên môn, phải ghi rõ: 
-     > *"Theo kiến thức chuyên môn về quy hoạch đô thị..."*
+Hãy trả lời bằng tiếng Việt, sử dụng ngôn ngữ học thuật, dễ hiểu và chính xác.`;
 
----
-
-**CẤU TRÚC BÁO CÁO PHÂN TÍCH**:
-
-1. **Thông tin trích dẫn từ tài liệu**:
-   - **Thông tin xác thực**: Trích dẫn nguyên văn có nguồn.
-   - **Thông tin gợi ý**: Dẫn chiếu kèm đánh giá mức độ chắc chắn.
-
-2. **Phân tích chuyên môn** (chỉ áp dụng khi cần mở rộng hoặc làm rõ dữ liệu tài liệu):
-   - Liên hệ, so sánh các dữ kiện.
-   - Đánh giá xu hướng, tính khả thi.
-   - Đưa ra nhận định gắn với thực tiễn hoặc chuẩn mực quốc tế.
-   - Mọi phân tích đều phải xuất phát từ dữ liệu trong tài liệu.
-
-3. **Hạn chế & Đề xuất nghiên cứu**:
-   - **Thiếu thông tin**: Liệt kê chi tiết.
-   - **Mâu thuẫn/Tiềm ẩn thiên lệch**: Chỉ rõ và phân tích.
-   - **Cần nghiên cứu thêm**: Đề xuất câu hỏi nghiên cứu hoặc phương pháp tiếp cận.
-
-4. **Cú pháp bắt buộc khi trích dẫn**:
-   - "Theo tài liệu (trang/đoạn/chương X)..."
-   - "Tài liệu nêu rõ rằng..."
-   - "Dữ liệu cho thấy..." (nếu có số liệu).
-   - "Theo kiến thức chuyên môn về quy hoạch đô thị..."
-   - "Tài liệu không đề cập đến..."
-   - "Cần thêm dữ liệu để xác định..."
-
----
-
-**THÔNG TIN NGỮ CẢNH**:
-- **Nguồn tài liệu**: ${config.contexts}
-- **Câu hỏi nghiên cứu**: ${config.question}
-
----
-
-**YÊU CẦU CHẤT LƯỢNG**:
-- Mọi dữ liệu đều có nguồn tham chiếu rõ ràng?
-- Đã phân biệt thông tin chắc chắn và không chắc chắn?
-- Không có suy đoán, thông tin ngoài nguồn?
-- Có đánh giá tính nhất quán và độ tin cậy của tài liệu?
-
----
-
-**BẮT ĐẦU PHÂN TÍCH**:
-Chỉ sử dụng thông tin từ tài liệu và kiến thức chuyên môn phù hợp. Phân tích cần có chiều sâu, chính xác và chuẩn mực học thuật.
-`;
   }
 };
 /**
@@ -721,7 +669,7 @@ class UrbanPlanningRAG {
     if (!contexts || !contexts.trim()) {
       throw new Error("Contexts cannot be empty");
     }
-    
+
     if (!question || !question.trim()) {
       throw new Error("Question cannot be empty");
     }
@@ -751,7 +699,7 @@ class UrbanPlanningRAG {
     ];
 
     // Check if response contains required citation phrases
-    const hasRequiredPhrases = requiredPhrases.some(phrase => 
+    const hasRequiredPhrases = requiredPhrases.some(phrase =>
       response.toLowerCase().includes(phrase.toLowerCase())
     );
 
@@ -892,17 +840,17 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ embedding, limit: 15 })
       });
-      
+
       if (!res.ok) {
         const error = await res.json();
         console.error('Search API error:', error);
         throw new Error(error.message || 'Failed to search');
       }
-      
+
       const data = await res.json();
       const sortedDataByScore = data.sort((a: SearchResultItem, b: SearchResultItem) => (b.score ?? 0) - (a.score ?? 0));
       console.log('Search results:', sortedDataByScore);
-      
+
       // Get top results
       const topResults = sortedDataByScore.slice(0, 5) as SearchResultItem[];
       const contexts = topResults.map((item: SearchResultItem) => item.payload.text).join('\n---\n');
@@ -910,9 +858,9 @@ export default function Home() {
       if (!contexts) {
         const noResultsMessage = 'Không tìm thấy thông tin liên quan đến câu hỏi của bạn.';
         setAnswer(noResultsMessage);
-        saveHistory({ 
-          question, 
-          answer: noResultsMessage, 
+        saveHistory({
+          question,
+          answer: noResultsMessage,
           timestamp: new Date().toISOString(),
           isValidated: true,
           validationIssues: []
@@ -938,7 +886,7 @@ export default function Home() {
       });
 
       const response = chatCompletion.choices[0].message.content;
-      
+
       // Format source information
       const formatSourceInfo = (result: SearchResultItem) => {
         const sourceFile = result.payload?.source_file || 'N/A';
@@ -957,26 +905,26 @@ export default function Home() {
       );
 
       // Add sources to the answer
-      const sourcesSection = uniqueSources.length > 0 
-        ? `\n\n**Nguồn tham khảo:**\n${uniqueSources.join('\n')}` 
+      const sourcesSection = uniqueSources.length > 0
+        ? `\n\n**Nguồn tham khảo:**\n${uniqueSources.join('\n')}`
         : '';
-      
+
       setSources(uniqueSources);
-      
-      const finalAnswer = (response || 'Không nhận được phản hồi từ hệ thống.') 
-      
+
+      const finalAnswer = (response || 'Không nhận được phản hồi từ hệ thống.')
+
       // 5. Validate the response
       const validation = ragSystem.validateResponse(finalAnswer);
-      
+
       // Log validation results for debugging
       if (!validation.isValid) {
         console.warn('Response validation issues:', validation.issues);
       }
-      
+
       setAnswer(finalAnswer);
-      saveHistory({ 
-        question, 
-        answer: finalAnswer + sourcesSection, 
+      saveHistory({
+        question,
+        answer: finalAnswer + sourcesSection,
         timestamp: new Date().toISOString(),
         isValidated: validation.isValid,
         validationIssues: validation.issues
@@ -992,14 +940,14 @@ export default function Home() {
         'Error details:',
         err instanceof Error
           ? {
-              message: err.message,
-              ...(axios.isAxiosError(err)
-                ? {
-                    status: err.response?.status,
-                    data: err.response?.data,
-                  }
-                : {}),
-            }
+            message: err.message,
+            ...(axios.isAxiosError(err)
+              ? {
+                status: err.response?.status,
+                data: err.response?.data,
+              }
+              : {}),
+          }
           : 'An unknown error occurred'
       );
 
@@ -1020,16 +968,16 @@ export default function Home() {
 
       if (err && typeof err === 'object') {
         const errorObj = err as ApiError;
-        
+
         // Handle network errors
         if (errorObj.code === 'ERR_NETWORK' || errorObj.message?.includes('Network Error')) {
           errorMessage = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.';
-        } 
+        }
         // Handle response errors
         else if (errorObj.response) {
           const status = errorObj.response.status;
           const data = errorObj.response.data;
-          
+
           if (status === 401) {
             errorMessage = 'API key không hợp lệ. Vui lòng kiểm tra lại.';
           } else if (status === 404) {
@@ -1048,9 +996,9 @@ export default function Home() {
       }
 
       setAnswer(errorMessage);
-      saveHistory({ 
-        question, 
-        answer: errorMessage, 
+      saveHistory({
+        question,
+        answer: errorMessage,
         timestamp: new Date().toISOString(),
         isValidated: false,
         validationIssues: ['System error']
@@ -1228,9 +1176,9 @@ export default function Home() {
             <div className="answer-text">{answer}</div>
             <div className="answer-text">Nguồn tham khảo:</div>
             <div className="answer-text">
-            {sources.map((source: string, index: number) => (
-              <div key={index}>{source}</div>
-            ))}
+              {sources.map((source: string, index: number) => (
+                <div key={index}>{source}</div>
+              ))}
             </div>
           </div>
         )}
