@@ -746,7 +746,7 @@ export default function Home() {
                     <span className="bubble-role">
                       {message.role === 'user' ? '👤 Bạn' : '🤖 Trợ lý'}
                     </span>
-                    <span className="bubble-timestamp">
+                    <span className="bubble-timestamp" style={{ }}>
                       {new Date(message.timestamp).toLocaleTimeString('vi-VN', {
                         hour: '2-digit',
                         minute: '2-digit',
