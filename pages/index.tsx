@@ -933,7 +933,7 @@ export default function Home() {
           },
           { role: 'user', content: prompt },
         ],
-        max_tokens: 1500,
+        max_tokens: 1000,
         temperature: 0.6,
       });
 
