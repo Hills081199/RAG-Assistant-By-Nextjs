@@ -904,7 +904,7 @@ export default function Home() {
       console.log('Search results:', sortedDataByScore);
       
       // Get top results
-      const topResults = sortedDataByScore.slice(0, 10) as SearchResultItem[];
+      const topResults = sortedDataByScore.slice(0, 5) as SearchResultItem[];
       const contexts = topResults.map((item: SearchResultItem) => item.payload.text).join('\n---\n');
 
       if (!contexts) {
@@ -933,7 +933,7 @@ export default function Home() {
           },
           { role: 'user', content: prompt },
         ],
-        max_tokens: 1000,
+        max_tokens: 1500,
         temperature: 0.6,
       });
 
