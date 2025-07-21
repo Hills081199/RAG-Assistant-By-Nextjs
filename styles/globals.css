@@ -14,7 +14,7 @@ body {
   word-break: break-word; /* Break words to prevent overflow */
 }
 
-.header {
+/* .header {
   background-color: #4a90e2;
   padding: 20px;
   text-align: center;
@@ -22,9 +22,21 @@ body {
   width: 100%;
   box-sizing: border-box;
   overflow: hidden;
+} */
+
+.header {
+  /* background-color: #FFD1DC; */ /* Light pink background */
+  background-color: #f5a9b3;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  color: #FFFFFF; /* White text */
 }
 
-.header-title {
+/* .header-title {
   font-size: 24px;
   font-weight: bold;
   color: #fff;
@@ -48,7 +60,36 @@ body {
   padding: 20px;
   border-radius: 12px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+} */
+
+.header-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #FFFFFF; /* White text */
+  margin: 0 0 8px;
+  word-wrap: break-word;
+  padding: 0 10px;
 }
+
+.header-subtitle {
+  font-size: 14px;
+  color: #FFFFFF; /* White text */
+  opacity: 0.9;
+  margin: 0;
+  padding: 0 10px;
+  word-wrap: break-word;
+}
+
+.input-section {
+  background-color: #FFE4E9; /* Lighter pink background */
+  margin: 20px 0;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: #333333; /* Dark text for better readability */
+}
+
+
 
 .input {
   width: 100%;
