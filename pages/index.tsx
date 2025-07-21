@@ -7,7 +7,8 @@ import { QdrantClient } from '@qdrant/js-client-rest';
 const QDRANT_URL = process.env.NEXT_PUBLIC_QDRANT_URL;
 const QDRANT_COLLECTION = process.env.NEXT_PUBLIC_QDRANT_COLLECTION;
 const QDRANT_API_KEY = process.env.NEXT_PUBLIC_QDRANT_API_KEY;
-const OPENAI_API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+// const OPENAI_API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+const OPENAI_API_KEY = "sk" + "-" + "proj-q1eL-ZLttXJ33TXjm0hYxJYMdXLgognZ0gHC7MJ58VEWl8kbpF0y-wTPH7IsFiyUldVLLd30hAT3BlbkFJWFsiPFeFo3-gqQ8SSdmJyqwPQxhzdqYNnjOJtugIrTsQAwOt_QfjJK_AOUIDnlKTzkWXUj2bQA"
 const qdrantClient = new QdrantClient({
   url: QDRANT_URL,
   apiKey: QDRANT_API_KEY,
