@@ -168,10 +168,10 @@ interface ConversationMessage {
 }
 
 // Config giữ nguyên
-const QDRANT_URL = "https://98c798e6-7675-4794-abca-2b695e6e00a3.us-west-2-0.aws.cloud.qdrant.io"
-const QDRANT_COLLECTION = "huonglan86"
-const QDRANT_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIn0.Lh8pBeYzqpT1J7ZxK0JkKDwIeIXySMqZ0cyEpX53U68"
-const OPENAI_API_KEY = "sk" + "-" + "proj-q1eL-ZLttXJ33TXjm0hYxJYMdXLgognZ0gHC7MJ58VEWl8kbpF0y-wTPH7IsFiyUldVLLd30hAT3BlbkFJWFsiPFeFo3-gqQ8SSdmJyqwPQxhzdqYNnjOJtugIrTsQAwOt_QfjJK_AOUIDnlKTzkWXUj2bQA"
+const QDRANT_URL = process.env.NEXT_PUBLIC_QDRANT_URL;
+const QDRANT_COLLECTION = process.env.NEXT_PUBLIC_QDRANT_COLLECTION;
+const QDRANT_API_KEY = process.env.NEXT_PUBLIC_QDRANT_API_KEY;
+const OPENAI_API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
 
 const ITEMS_PER_PAGE = 5;
 const MAX_HISTORY_ITEMS = 50;
