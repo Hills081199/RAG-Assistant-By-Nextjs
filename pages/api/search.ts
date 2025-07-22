@@ -2,8 +2,8 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { QdrantClient } from '@qdrant/js-client-rest';
 
 const qdrantClient = new QdrantClient({
-  url: process.env.NEXT_PUBLIC_QDRANT_URL,
-  apiKey: process.env.NEXT_PUBLIC_QDRANT_API_KEY,
+  url: process.env.QDRANT_URL,
+  apiKey: process.env.QDRANT_API_KEY,
 });
 console.log("CLIENT : ", qdrantClient)
 
@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Invalid embedding format' });
     }
     console.log("before search")
-    const searchRes = await qdrantClient.search(process.env.NEXT_PUBLIC_QDRANT_COLLECTION, {
+    const searchRes = await qdrantClient.search(process.env.QDRANT_COLLECTION, {
       vector: embedding,
       limit,
       with_payload: true,
