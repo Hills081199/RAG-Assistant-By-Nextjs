@@ -19,7 +19,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Invalid embedding format' });
     }
     console.log("before search")
-    const searchRes = await qdrantClient.search(process.env.QDRANT_COLLECTION, {
+    const COLLECTION = process.env.QDRANT_COLLECTION;
+    if (!COLLECTION) {
+      throw new Error('QDRANT_COLLECTION is not defined in environment variables.');
+    }
+    const searchRes = await qdrantClient.search(COLLECTION, {
       vector: embedding,
       limit,
       with_payload: true,
