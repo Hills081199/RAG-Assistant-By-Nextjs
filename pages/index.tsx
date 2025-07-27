@@ -1,6 +1,6 @@
 
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import OpenAI from 'openai';
 
 // Urban Planning RAG Prompt Configuration - CẢI TIẾN
@@ -191,19 +191,39 @@ export default function Home() {
   // CẢI TIẾN: THAY ĐỔI STRUCTURE CỦA HISTORY
   const [conversationMessages, setConversationMessages] = useState<ConversationMessage[]>([]);
   const [history, setHistory] = useState<{ question: string; answer: string; timestamp: string; isValidated?: boolean; validationIssues?: string[] }[]>([]);
-
+  const [collections, setCollections] = useState<string[]>([]);
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
   const [showHistory, setShowHistory] = useState(false);
   const [historyPage, setHistoryPage] = useState(1);
   const [searchKeyword, setSearchKeyword] = useState('');
-
+  const [selectedCollection, setSelectedCollection] = useState(QDRANT_COLLECTION);
   // THÊM REF CHO AUTO SCROLL
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
+  // THÊM PHƯƠNG THỨC LOAD COLLECTIONS
+  const loadCollections = useCallback(async () => {
+    try {
+      const response = await fetch('/api/collections');
+      if (!response.ok) {
+        throw new Error('Failed to load collections');
+      }
+      const data = await response.json();
+      setCollections(data.collections);
+      if (data.collections.length > 0 && !selectedCollection) {
+        setSelectedCollection(data.collections[0]);
+      }
+    } catch (error) {
+      console.error('Error loading collections:', error);
+      setCollections([]);
+    }
+  }, [selectedCollection]);
   useEffect(() => {
-    loadHistory();
-    loadConversation(); // THÊM
-  }, []);
+    const initializeApp = async () => {
+      loadHistory();
+      loadConversation();
+      await loadCollections();
+    };
+    initializeApp();
+  }, [loadCollections]);
 
   // THÊM AUTO SCROLL
   useEffect(() => {
@@ -237,47 +257,49 @@ export default function Home() {
     }
   };
 
+
+
   // THÊM PHƯƠNG THỨC SAVE CONVERSATION
   const saveConversation = (messages: ConversationMessage[]) => {
     try {
       const trimmedMessages = messages.slice(-MAX_HISTORY_ITEMS);
-      
+
       // Thử lưu vào localStorage
       try {
         localStorage.setItem('conversationMessages', JSON.stringify(trimmedMessages));
       } catch (error) {
         // Nếu vượt quá dung lượng, xóa bớt tin nhắn cũ
-        if (error instanceof DOMException && 
-            (error.name === 'QuotaExceededError' || 
-             error.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
-             error.toString().includes('QuotaExceededError'))) {
-          
+        if (error instanceof DOMException &&
+          (error.name === 'QuotaExceededError' ||
+            error.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+            error.toString().includes('QuotaExceededError'))) {
+
           console.warn('LocalStorage full, removing older messages...');
-          
+
           // Giảm số lượng tin nhắn còn 1 nửa và thử lại
           const halfMessages = trimmedMessages.slice(Math.floor(trimmedMessages.length / 2));
-          
+
           if (halfMessages.length > 0) {
             // Thử lưu lại với số lượng tin nhắn ít hơn
             localStorage.setItem('conversationMessages', JSON.stringify(halfMessages));
             setConversationMessages(halfMessages);
             return;
           }
-          
+
           // Nếu vẫn lỗi, xóa hết
           console.warn('Clearing all messages due to storage limit');
           localStorage.removeItem('conversationMessages');
           setConversationMessages([]);
           return;
         }
-        
+
         // Nếu lỗi khác, ném ra ngoài để xử lý ở catch bên ngoài
         throw error;
       }
-      
+
       // Cập nhật state nếu lưu thành công
       setConversationMessages(trimmedMessages);
-      
+
     } catch (err) {
       console.error('Error saving conversation:', err);
       // Thông báo cho người dùng nếu cần
@@ -302,7 +324,7 @@ export default function Home() {
       return;
     }
 
-    if (!QDRANT_URL || !QDRANT_COLLECTION || !QDRANT_API_KEY || !OPENAI_API_KEY) {
+    if (!QDRANT_URL || !QDRANT_API_KEY || !OPENAI_API_KEY) {
       alert('Thiếu thông tin cấu hình API. Vui lòng kiểm tra cấu hình');
       return;
     }
@@ -322,7 +344,7 @@ export default function Home() {
 
       // 1. Get embedding từ OpenAI (giữ nguyên)
       const embeddingResponse = await openai.embeddings.create({
-        model: 'text-embedding-3-large',
+        model: 'text-embedding-3-small',
         input: question,
       });
 
@@ -330,7 +352,7 @@ export default function Home() {
       const res = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ embedding, limit: 5 })
+        body: JSON.stringify({ embedding, limit: 5, collection: selectedCollection })
       });
 
       if (!res.ok) {
@@ -693,6 +715,31 @@ export default function Home() {
       <div className="header">
         <h1 className="header-title">Trợ lý Nghiên cứu Quy hoạch của Hương Lan</h1>
         <p className="header-subtitle">Trò chuyện tự nhiên về quy hoạch đô thị với phân tích chính xác</p>
+        <div className="collection-selector">
+          <label className="collection-label">Chọn bộ sưu tập</label>
+          <div className="select-wrapper">
+            <select
+              value={selectedCollection}
+              onChange={(e) => setSelectedCollection(e.target.value)}
+              className="collection-dropdown"
+              disabled={collections.length === 0}
+            >
+              {collections.length > 0 ? (
+                collections.map((collection) => (
+                  <option key={collection} value={collection}>
+                    {collection.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  </option>
+                ))
+              ) : (
+                <option value="">Đang tải bộ sưu tập...</option>
+              )}
+            </select>
+            <span className="dropdown-arrow">▼</span>
+          </div>
+          {collections.length > 0 && (
+            <p className="collection-count">Đã tải {collections.length} bộ sưu tập</p>
+          )}
+        </div>
       </div>
 
 
@@ -783,7 +830,7 @@ export default function Home() {
                     <span className="bubble-role">
                       {message.role === 'user' ? '👤 Bạn' : '🤖 Trợ lý'}
                     </span>
-                    <span className="bubble-timestamp" style={{ }}>
+                    <span className="bubble-timestamp" style={{}}>
                       {new Date(message.timestamp).toLocaleTimeString('vi-VN', {
                         hour: '2-digit',
                         minute: '2-digit',
@@ -893,6 +940,68 @@ export default function Home() {
     flex-direction: column;
     gap: 8px;
   }
+    .collection-selector {
+  max-width: 600px;
+  margin: 0 auto 24px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.collection-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.collection-dropdown {
+  width: 100%;
+  padding: 10px 36px 10px 12px;
+  font-size: 16px;
+  color: #111827;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.collection-dropdown:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.collection-dropdown:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.dropdown-arrow {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  color: #6b7280;
+  pointer-events: none;
+}
+
+.collection-count {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #6b7280;
+  text-align: left;
+}
 `}</style>
 
     </div>

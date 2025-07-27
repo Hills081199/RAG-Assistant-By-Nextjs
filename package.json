@@ -14,8 +14,10 @@
     "@qdrant/js-client-rest": "^1.15.0",
     "antd": "^5.26.6",
     "axios": "^1.5.1",
+    "chromadb": "^3.0.0",
+    "langchain": "^0.3.30",
     "next": "15.4.2",
-    "openai": "^5.10.1",
+    "openai": "^5.10.2",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },

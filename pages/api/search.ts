@@ -5,7 +5,6 @@ const qdrantClient = new QdrantClient({
   url: process.env.QDRANT_URL,
   apiKey: process.env.QDRANT_API_KEY,
 });
-console.log("CLIENT : ", qdrantClient)
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -13,25 +12,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { embedding, limit = 5 } = req.body;
+    const { embedding, limit = 5, collection: collectionName } = req.body;
 
     if (!embedding || !Array.isArray(embedding)) {
       return res.status(400).json({ error: 'Invalid embedding format' });
     }
-    console.log("before search")
-    const COLLECTION = process.env.QDRANT_COLLECTION;
-    if (!COLLECTION) {
-      throw new Error('QDRANT_COLLECTION is not defined in environment variables.');
+
+    // Use the provided collection name or fall back to environment variable
+    const collection = collectionName || process.env.QDRANT_COLLECTION;
+    
+    if (!collection) {
+      return res.status(400).json({ 
+        error: 'No collection specified',
+        message: 'Please provide a collection name or configure QDRANT_COLLECTION in environment variables.'
+      });
     }
-    const searchRes = await qdrantClient.search(COLLECTION, {
+  
+    const searchRes = await qdrantClient.search(collection, {
       vector: embedding,
-      limit,
+      limit: limit || 5,
       with_payload: true,
       with_vector: false,
     });
-    console.log("SEARCH RES:" ,searchRes)
 
-    // Ensure we always return an array, even if empty
     return res.status(200).json(Array.isArray(searchRes) ? searchRes : []);
   } catch (err) {
     console.error('Qdrant search error:', err);
