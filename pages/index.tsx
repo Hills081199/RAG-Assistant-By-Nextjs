@@ -349,6 +349,7 @@ export default function Home() {
       });
 
       const embedding = embeddingResponse.data[0].embedding;
+      console.log(embedding)
       const res = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

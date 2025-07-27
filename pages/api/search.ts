@@ -12,8 +12,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { embedding, limit = 5, collection: collectionName } = req.body;
-
+    const { embedding, limit, collection: collectionName } = req.body;
+    console.log(embedding, limit)
     if (!embedding || !Array.isArray(embedding)) {
       return res.status(400).json({ error: 'Invalid embedding format' });
     }
