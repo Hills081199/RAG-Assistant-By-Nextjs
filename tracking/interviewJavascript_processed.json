@@ -1,0 +1,14 @@
+{
+  "collection_name": "interviewJavascript",
+  "created_at": "2025-07-27T13:56:13.204713",
+  "last_updated": "2025-07-27T14:06:30.211497",
+  "processed_files": {
+    "400+ JS Interview Questions.pdf": {
+      "file_path": "./documents/interviewJavascript/400+ JS Interview Questions.pdf",
+      "file_hash": "-3500902273660772713",
+      "processed_at": "2025-07-27T14:06:30.209741",
+      "chunks_count": 434,
+      "file_size": 4581772
+    }
+  }
+}
