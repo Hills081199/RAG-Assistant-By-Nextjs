@@ -9,6 +9,9 @@ const qdrantClient = new QdrantClient({
 });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  console.log(process.env.QDRANT_URL)
+  console.log(process.env.QDRANT_API_KEY)
+  console.log(req.body.collection)
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }

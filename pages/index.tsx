@@ -349,7 +349,6 @@ export default function Home() {
       });
 
       const embedding = embeddingResponse.data[0].embedding;
-      console.log(embedding)
       const res = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -364,7 +363,6 @@ export default function Home() {
 
       const data = await res.json();
       const sortedDataByScore = data.sort((a: SearchResultItem, b: SearchResultItem) => (b.score ?? 0) - (a.score ?? 0));
-      console.log('Search results:', sortedDataByScore);
 
       const topResults = sortedDataByScore.slice(0, 5) as SearchResultItem[];
       const contexts = topResults.map((item: SearchResultItem) => item.payload.text).join('\n---\n');
