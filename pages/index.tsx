@@ -166,7 +166,7 @@ export default function Home() {
     }
   };
 
-  const saveHistory = (newEntry: { question: string; answer: string; timestamp: string; isValidated?: boolean; validationIssues?: string[] }) => {
+  const saveHistory = (newEntry: { question: string; answer: string; sources: string[]; timestamp: string; isValidated?: boolean; validationIssues?: string[] }) => {
     try {
       const updatedHistory = [...history, newEntry].slice(-MAX_HISTORY_ITEMS);
       setHistory(updatedHistory);
@@ -247,6 +247,7 @@ export default function Home() {
         saveHistory({
           question,
           answer: noResultsMessage,
+          sources: [],
           timestamp: new Date().toISOString(),
           isValidated: true,
           validationIssues: []
@@ -323,14 +324,10 @@ export default function Home() {
 
       saveConversation([...updatedMessages, assistantMessage]);
 
-      // Vẫn lưu vào history cũ để tương thích
-      const sourcesSection = uniqueSources.length > 0
-        ? `\n\n**Nguồn tham khảo:**\n${uniqueSources.join('\n')}`
-        : '';
-
       saveHistory({
         question,
-        answer: finalAnswer + sourcesSection,
+        answer: finalAnswer,
+        sources: uniqueSources,
         timestamp: new Date().toISOString(),
         isValidated: validation.isValid,
         validationIssues: validation.issues
@@ -377,6 +374,7 @@ export default function Home() {
       saveHistory({
         question,
         answer: errorMessage,
+        sources: [],
         timestamp: new Date().toISOString(),
         isValidated: false,
         validationIssues: ['System error']
@@ -445,54 +443,69 @@ export default function Home() {
   };
 
   // Render methods giữ nguyên...
-  const renderHistoryItem = (item: { question: string; answer: string; timestamp: string; isValidated?: boolean; validationIssues?: string[] }, index: number) => {
-    const actualIndex = startIndex + index;
-    const isExpanded = expandedItems.has(actualIndex);
-    const shouldTruncate = item.answer.length > 150;
-
-    const toggleExpanded = () => {
-      const newExpanded = new Set(expandedItems);
-      if (isExpanded) {
-        newExpanded.delete(actualIndex);
-      } else {
-        newExpanded.add(actualIndex);
-      }
-      setExpandedItems(newExpanded);
-    };
-
-    return (
-      <div className="history-item" key={actualIndex}>
-        <div className="history-item-header">
-          <span className="history-question">Q: {item.question}</span>
-          <div className="history-metadata">
-            {item.isValidated === false && (
-              <span className="validation-warning" title={`Vấn đề: ${item.validationIssues?.join(', ')}`}>
-                ⚠️
+    // Render methods giữ nguyên...
+    const renderHistoryItem = (item: { question: string; answer: string; timestamp: string; sources?: string[]; isValidated?: boolean; validationIssues?: string[] }, index: number) => {
+      const actualIndex = startIndex + index;
+      const isExpanded = expandedItems.has(actualIndex);
+      const shouldTruncate = item.answer.length > 150;
+  
+      const toggleExpanded = () => {
+        const newExpanded = new Set(expandedItems);
+        if (isExpanded) {
+          newExpanded.delete(actualIndex);
+        } else {
+          newExpanded.add(actualIndex);
+        }
+        setExpandedItems(newExpanded);
+      };
+  
+      return (
+        <div className="history-item" key={actualIndex}>
+          <div className="history-item-header">
+            <span className="history-question">Q: {item.question}</span>
+            <div className="history-metadata">
+              {item.isValidated === false && (
+                <span className="validation-warning" title={`Vấn đề: ${item.validationIssues?.join(', ')}`}>
+                  ⚠️
+                </span>
+              )}
+              <span className="history-timestamp">
+                {new Date(item.timestamp).toLocaleDateString('vi-VN', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
               </span>
-            )}
-            <span className="history-timestamp">
-              {new Date(item.timestamp).toLocaleDateString('vi-VN', {
-                day: '2-digit',
-                month: '2-digit',
-                year: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </span>
+            </div>
           </div>
+          <div className="history-answer-label">Trả lời:</div>
+          <div className="history-answer">
+            {isExpanded || !shouldTruncate ? item.answer : `${item.answer.substring(0, 150)}...`}
+          </div>
+          {item.sources && item.sources.length > 0 && (
+            <div className="history-sources">
+              <div className="history-sources-label">Nguồn:</div>
+              <ul className="sources-list">
+                {item.sources.map((source, i) => (
+                  <li key={i} className="source-item">
+                    <p>
+                      {source}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {shouldTruncate && (
+            <button onClick={toggleExpanded} className="expand-button">
+              {isExpanded ? '↑ Thu gọn' : '↓ Xem thêm'}
+            </button>
+          )}
         </div>
-        <div className="history-answer-label">Trả lời:</div>
-        <div className="history-answer">
-          {isExpanded || !shouldTruncate ? item.answer : `${item.answer.substring(0, 150)}...`}
-        </div>
-        {shouldTruncate && (
-          <button onClick={toggleExpanded} className="expand-button">
-            {isExpanded ? '↑ Thu gọn' : '↓ Xem thêm'}
-          </button>
-        )}
-      </div>
-    );
-  };
+      );
+    };
 
   const renderPaginationControls = () => {
     if (totalPages <= 1) return null;
@@ -863,6 +876,28 @@ export default function Home() {
   font-size: 12px;
   color: #6b7280;
   text-align: left;
+}
+  .history-sources {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #4a90e2;
+}
+
+.history-sources-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4a90e2;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sources-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 `}</style>
 
