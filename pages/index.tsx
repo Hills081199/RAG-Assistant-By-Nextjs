@@ -215,7 +215,7 @@ export default function Home() {
       const res = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ embedding, limit: 5, collection: selectedCollection! })
+        body: JSON.stringify({ embedding, limit: 10, collection: selectedCollection! })
       });
 
       if (!res.ok) {
