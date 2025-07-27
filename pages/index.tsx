@@ -208,6 +208,8 @@ export default function Home() {
       });
 
       const embedding = embeddingResponse.data[0].embedding;
+      console.log(selectedCollection)
+      console.log(getPromptForCollection(selectedCollection!))
       const ragSystem = new RAGTemplate(getPromptForCollection(selectedCollection!));
 
       const res = await fetch('/api/search', {

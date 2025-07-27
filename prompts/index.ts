@@ -6,19 +6,19 @@ import { PromptTemplate } from './types';
 
 export const PROMPT_MAP = {
     'thuyetminh_qhc-hanoi_26_10_2023_dau': urbanPlanningRAGPrompt,
-    'programming_collection': javascriptInterviewRAGPrompt,
+    'interviewJavascript': javascriptInterviewRAGPrompt,
     // Add hskPrompt when available
     // 'hsk_collection': hskPrompt,
 };
 
 export const getPromptForCollection = (collectionName: string): PromptTemplate => {
-    if (collectionName.startsWith('quyhoach') || collectionName == "thuyetminh_qhc-hanoi_26_10_2023_dau") {
+    if (collectionName.includes('quyhoach') || collectionName == "thuyetminh_qhc-hanoi_26_10_2023_dau") {
         return urbanPlanningRAGPrompt;
     }
-    if (collectionName.startsWith('interviewJavascript')) {
+    if (collectionName.includes('interviewJavascript')) {
         return javascriptInterviewRAGPrompt;
     }
-    if (collectionName.startsWith('tiengtrung_')) {
+    if (collectionName.includes('tiengtrung_')) {
         // Return hskPrompt when available
         // return hskPrompt;
         return urbanPlanningRAGPrompt; // Default to urbanPlanningRAGPrompt for now
