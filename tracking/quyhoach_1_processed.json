@@ -1,0 +1,56 @@
+{
+  "collection_name": "quyhoach_1",
+  "created_at": "2025-07-27T18:18:42.660448",
+  "last_updated": "2025-07-27T18:26:01.350212",
+  "processed_files": {
+    "PLANNING OF EIGHT KEY NEW INDUSTRIAL CITIES THE FOUNDATION STONE OF URBAN PLANNING IN NEW CHINA.pdf": {
+      "file_path": "./documents/quyhoach_1/PLANNING OF EIGHT KEY NEW INDUSTRIAL CITIES THE FOUNDATION STONE OF URBAN PLANNING IN NEW CHINA.pdf",
+      "file_hash": "438041835698023843",
+      "processed_at": "2025-07-27T18:19:34.171881",
+      "chunks_count": 29,
+      "file_size": 5303573
+    },
+    "Triết lý quy hoạch phát triển_2023.05_Vũ Hoài Đức.pdf": {
+      "file_path": "./documents/quyhoach_1/Triết lý quy hoạch phát triển_2023.05_Vũ Hoài Đức.pdf",
+      "file_hash": "4964328601164388757",
+      "processed_at": "2025-07-27T18:21:28.181369",
+      "chunks_count": 72,
+      "file_size": 3739461
+    },
+    "ông béo.pdf": {
+      "file_path": "./documents/quyhoach_1/ông béo.pdf",
+      "file_hash": "-8283298776328721505",
+      "processed_at": "2025-07-27T18:21:50.464561",
+      "chunks_count": 14,
+      "file_size": 2157635
+    },
+    "bài 3.pdf": {
+      "file_path": "./documents/quyhoach_1/bài 3.pdf",
+      "file_hash": "3043428663042669471",
+      "processed_at": "2025-07-27T18:23:03.799411",
+      "chunks_count": 27,
+      "file_size": 5018555
+    },
+    "bài 5.pdf": {
+      "file_path": "./documents/quyhoach_1/bài 5.pdf",
+      "file_hash": "-1366913993943046913",
+      "processed_at": "2025-07-27T18:23:35.163806",
+      "chunks_count": 21,
+      "file_size": 1775575
+    },
+    "bài 4.pdf": {
+      "file_path": "./documents/quyhoach_1/bài 4.pdf",
+      "file_hash": "7842475370671072519",
+      "processed_at": "2025-07-27T18:24:23.952880",
+      "chunks_count": 35,
+      "file_size": 7572281
+    },
+    "Urban growth and change analysis using remote sensing and spatial metrics from 1975 to 2003 for Hanoi  Vietnam.pdf": {
+      "file_path": "./documents/quyhoach_1/Urban growth and change analysis using remote sensing and spatial metrics from 1975 to 2003 for Hanoi  Vietnam.pdf",
+      "file_hash": "-2267151702966015423",
+      "processed_at": "2025-07-27T18:26:01.350107",
+      "chunks_count": 65,
+      "file_size": 3762462
+    }
+  }
+}
