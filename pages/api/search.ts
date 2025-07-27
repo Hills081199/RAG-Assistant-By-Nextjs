@@ -1,31 +1,24 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { QdrantClient } from '@qdrant/js-client-rest';
 
-console.log(process.env.QDRANT_URL)
-console.log(process.env.QDRANT_API_KEY)
 const qdrantClient = new QdrantClient({
   url: process.env.QDRANT_URL,
   apiKey: process.env.QDRANT_API_KEY,
 });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  console.log(process.env.QDRANT_URL)
-  console.log(process.env.QDRANT_API_KEY)
-  console.log(req.body.collection)
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
     const { embedding, limit, collection: collectionName } = req.body;
-    console.log(embedding, limit)
     if (!embedding || !Array.isArray(embedding)) {
       return res.status(400).json({ error: 'Invalid embedding format' });
     }
 
     // Use the provided collection name or fall back to environment variable
     const collection = collectionName;
-    console.log("COLLECTION : ",collection)
     
     if (!collection) {
       return res.status(400).json({ 
@@ -33,7 +26,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         message: 'Please provide a collection name or configure QDRANT_COLLECTION in environment variables.'
       });
     }
-    console.log(collection)
     const searchRes = await qdrantClient.search(collection, {
       vector: embedding,
       limit: limit || 5,
