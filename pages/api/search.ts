@@ -27,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         message: 'Please provide a collection name or configure QDRANT_COLLECTION in environment variables.'
       });
     }
-  
+    console.log(collection)
     const searchRes = await qdrantClient.search(collection, {
       vector: embedding,
       limit: limit || 5,
