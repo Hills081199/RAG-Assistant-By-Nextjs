@@ -24,7 +24,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Use the provided collection name or fall back to environment variable
-    const collection = collectionName || process.env.QDRANT_COLLECTION;
+    const collection = collectionName;
+    console.log("COLLECTION : ",collection)
     
     if (!collection) {
       return res.status(400).json({ 
