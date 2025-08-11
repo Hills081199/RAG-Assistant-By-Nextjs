@@ -28,10 +28,11 @@ RAG-Assistant-By-Nextjs/
 │   ├── quyhoach_1.json      # List of embedded files for quyhoach_1
 │   ├── interviewJavascript.json
 │   └── ...
-├── embedding.py              # Document embedding script
-├── collections.json          # Exported collections metadata
+├── embedding.py
+├── exports/                 # Tracks embedded documents per collection
+│   ├── collections.json                 # Document embedding script
+├──           # Exported collections metadata
 ├── pages/                    # Next.js pages
-├── components/               # React components
 └── ...
 ```
 
