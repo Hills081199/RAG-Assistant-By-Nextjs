@@ -201,6 +201,11 @@ yarn dev
 - javascriptInterviewPrompt.ts
 - urbanPlanningPrompt.ts
 - ...
+![img_prompt](images/img7.png)
+![img_prompt](images/img8.png)
+![img_prompt](images/img9.png)
+![img_prompt](images/img10.png)
+
 
 Feel free to edit these files to tailor the AI's responses according to your needs for each domain.
 
