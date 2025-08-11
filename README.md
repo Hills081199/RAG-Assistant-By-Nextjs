@@ -2,6 +2,10 @@
 
 An intelligent document query, research, and search support system using RAG (Retrieval-Augmented Generation) technology with embedded document collections.
 
+# Todos: 
+- [ ] Refactor components
+- [ ] Design a backend to scale for group chat with a common assistant
+
 ## 📋 Overview
 RAG Assistant is a web application built with Next.js that enables users to:
 - Embed and store documents in organized collections
