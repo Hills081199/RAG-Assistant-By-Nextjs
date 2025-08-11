@@ -68,6 +68,7 @@ python embedding.py <collection_name>
 ```
 ![qdrant_collection](images/img4.png)
 ![documents](images/img3.png)
+<br>
 **Example:**
 ```bash
 python embedding.py quyhoach_1
