@@ -1,40 +1,167 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+RAG Assistant By Next.js
+An intelligent document query, research, and search support system using RAG (Retrieval-Augmented Generation) technology with embedded document collections.
 
-## Getting Started
+📋 Overview
+RAG Assistant is a web application built with Next.js that enables users to:
 
-First, run the development server:
+Embed and store documents in organized collections
+Query information intelligently from document collections
+Interact with an AI assistant through a chat interface
+Manage and track conversation history
+Incremental document embedding with duplicate detection
+🛠️ Tech Stack
+Frontend: Next.js
+Vector Database: Qdrant
+Backend Processing: Python
+AI/ML: Document Embedding & RAG
+📁 Project Structure
+RAG-Assistant-By-Nextjs/
+├── documents/                 # Root folder for document collections
+│   ├── quyhoach_1/           # Example: urban planning documents
+│   ├── interviewJavascript/  # Example: JavaScript interview questions
+│   ├── thuyetminh_qhc-hanoi_26_10_2023_dau/  # Example: Hanoi planning report
+│   └── ...                   # Other document collections
+├── tracking/                 # Tracks embedded documents per collection
+│   ├── quyhoach_1.json      # List of embedded files for quyhoach_1
+│   ├── interviewJavascript.json
+│   └── ...
+├── embedding.py              # Document embedding script
+├── collections.json          # Exported collections metadata
+├── pages/                    # Next.js pages
+├── components/               # React components
+└── ...
+🚀 Getting Started
+Prerequisites
+Node.js (v16 or higher)
+Python (v3.8 or higher)
+Qdrant Vector Database
+Installation
+bash
+# Install Next.js dependencies
+yarn install
 
-```bash
-npm run dev
-# or
+# Install Python dependencies
+pip install -r requirements.txt
+Setup Qdrant
+Ensure Qdrant server is running and accessible
+
+📚 Usage
+1. Document Embedding
+To embed documents into collections, use the following command:
+
+bash
+python embedding.py <collection_name>
+Example:
+
+bash
+python embedding.py quyhoach_1
+This command will:
+
+Read all documents from the documents/quyhoach_1/ folder
+Create embeddings for new documents (skips already embedded files)
+Store them in a Qdrant collection named quyhoach_1
+Update the tracking file tracking/quyhoach_1.json with processed documents
+Note: The <collection_name> should match the subfolder name in the documents/ directory.
+
+2. Export Collections Metadata
+After embedding, export the collections information:
+
+bash
+python embedding.py export
+This generates a collections.json file with the following structure:
+
+json
+{
+  "exported_at": "2025-07-27T18:26:16.548254",
+  "total_collections": 3,
+  "collections": [
+    "interviewJavascript",
+    "quyhoach_1",
+    "thuyetminh_qhc-hanoi_26_10_2023_dau"
+  ]
+}
+The Next.js application reads this file to display available collections in the UI.
+
+3. Running the Web Interface
+Start the development server:
+
+bash
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+The web application will be available at http://localhost:3000
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+🖥️ Web Interface Features
+Collection Selection
+Dropdown/selection interface showing all available collections from collections.json
+Each collection represents a specific domain or topic
+Dynamic loading based on exported collections metadata
+Conversational AI Assistant
+Interactive chat interface for asking questions
+Context-aware responses based on the selected document collection
+Real-time query processing and intelligent information retrieval
+Chat History Management
+View previous conversations and queries
+Track interaction history for reference
+Search through past conversations
+🔧 How It Works
+Document Processing Flow
+Document Organization: Place documents in subfolders within documents/ directory
+Initial Embedding: Run python embedding.py <collection_name> to process documents
+Tracking System: System creates tracking/<collection_name>.json to record processed files
+Incremental Updates: When adding new documents, re-run embedding to process only new files
+Collection Export: Run python embedding.py export to update collections.json
+Web Interface: Next.js reads collections.json to populate collection selector
+Incremental Embedding System
+The tracking system prevents re-processing of already embedded documents:
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+Each collection has a corresponding tracking file in the tracking/ folder
+Contains list of previously embedded document filenames
+New embedding runs skip files already in the tracking list
+Enables efficient incremental updates when adding new documents
+📝 Example Workflow
+Setup Documents:
+documents/
+├── quyhoach_1/
+│   ├── document1.pdf
+│   └── document2.docx
+Initial Embedding:
+bash
+python embedding.py quyhoach_1
+Add More Documents:
+documents/quyhoach_1/
+├── document1.pdf      # Already embedded
+├── document2.docx     # Already embedded  
+└── document3.pdf      # New document
+Incremental Embedding (only processes document3.pdf):
+bash
+python embedding.py quyhoach_1
+Export Collections:
+bash
+python embedding.py export
+Start Web App:
+bash
+yarn dev
+Query Documents: Select "quyhoach_1" and start asking questions
+🗂️ File Management
+Tracking Files
+Located in tracking/ folder
+One JSON file per collection
+Contains list of embedded document filenames
+Automatically updated during embedding process
+Collections Metadata
+collections.json contains all available collections
+Updated via python embedding.py export
+Used by Next.js frontend to populate collection selector
+Includes timestamp and total collection count
+🤝 Contributing
+Feel free to contribute to this project by:
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+Adding new features
+Improving documentation
+Reporting bugs
+Suggesting enhancements
+📄 License
+[Add your license information here]
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+🆘 Support
+For questions and support, please create an issue or contact the development team.
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
