@@ -202,7 +202,7 @@ Feel free to contribute to this project by:
 - Suggesting enhancements
 
 ## 📄 License
-[Add your license information here]
+<>
 
 ## 🆘 Support
 For questions and support, please create an issue or contact the development team.
