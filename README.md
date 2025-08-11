@@ -194,6 +194,16 @@ yarn dev
 - Used by Next.js frontend to populate collection selector
 - Includes timestamp and total collection count
 
+🎨 Customizing Prompts by Domain
+
+9. **If you want to customize the behavior or responses for specific domains, you can modify the prompt templates located in the prompts/ folder.** This folder contains TypeScript files for different domains, such as:
+- index.ts (add more condition at getPromptForCollection)
+- javascriptInterviewPrompt.ts
+- urbanPlanningPrompt.ts
+- ...
+
+Feel free to edit these files to tailor the AI's responses according to your needs for each domain.
+
 ## 🤝 Contributing
 Feel free to contribute to this project by:
 - Adding new features
