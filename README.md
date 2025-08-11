@@ -9,6 +9,10 @@ RAG Assistant is a web application built with Next.js that enables users to:
 - Interact with an AI assistant through a chat interface
 - Manage and track conversation history
 - Incremental document embedding with duplicate detection
+  ![homepage](images/img1.png)
+  ![homepage](images/img2.png)
+  ![homepage](images/img5.png)
+  ![homepage](images/img6.png)
 
 ## 🛠️ Tech Stack
 - **Frontend**: Next.js
@@ -62,6 +66,8 @@ To embed documents into collections, use the following command:
 ```bash
 python embedding.py <collection_name>
 ```
+![qdrant_collection](images/img4.png)
+![documents](images/img3.png)
 **Example:**
 ```bash
 python embedding.py quyhoach_1
